@@ -555,8 +555,8 @@ initialize:
 	.word	50360320
 	.word	interruptHandler
 	.word	11025
-	.word	2294088
-	.word	likey
+	.word	2170025
+	.word	knocknock
 	.size	initialize, .-initialize
 	.align	2
 	.global	goToInstructions
@@ -695,8 +695,8 @@ goToGame:
 	.word	83886592
 	.word	spritesPal
 	.word	11025
-	.word	2454604
-	.word	POWER_EXO_8_bits
+	.word	2294088
+	.word	likey
 	.word	state
 	.size	goToGame, .-goToGame
 	.align	2
@@ -940,8 +940,8 @@ pause:
 	.word	oldButtons
 	.word	buttons
 	.word	11025
-	.word	2294088
-	.word	likey
+	.word	2170025
+	.word	knocknock
 	.word	gamebgPal
 	.word	loadPalette
 	.word	DMANow
@@ -985,19 +985,24 @@ goToWin:
 	mov	r0, #3
 	mov	lr, pc
 	bx	r4
-	ldr	r2, .L126+24
 	mov	r3, #1024
+	ldr	r2, .L126+24
 	ldr	r1, .L126+28
 	mov	r0, #3
 	mov	lr, pc
 	bx	r4
 	mov	lr, pc
 	bx	r5
-	ldr	r3, .L126+32
+	ldr	r2, .L126+32
+	mov	r3, #1
+	ldr	r1, .L126+36
+	ldr	r0, .L126+40
+	bl	playSoundA
+	ldr	r3, .L126+44
 	mov	lr, pc
 	bx	r3
 	mov	r2, #4
-	ldr	r3, .L126+36
+	ldr	r3, .L126+48
 	ldmfd	sp!, {r4, r5, r6, lr}
 	str	r2, [r3]
 	bx	lr
@@ -1012,6 +1017,9 @@ goToWin:
 	.word	winbgTiles
 	.word	100726784
 	.word	winbgMap
+	.word	11025
+	.word	2249917
+	.word	cheerup
 	.word	waitForVBlank
 	.word	state
 	.size	goToWin, .-goToWin
@@ -1043,19 +1051,24 @@ goToLose:
 	mov	r0, #3
 	mov	lr, pc
 	bx	r4
-	ldr	r2, .L130+24
 	mov	r3, #1024
+	ldr	r2, .L130+24
 	ldr	r1, .L130+28
 	mov	r0, #3
 	mov	lr, pc
 	bx	r4
 	mov	lr, pc
 	bx	r5
-	ldr	r3, .L130+32
+	ldr	r2, .L130+32
+	mov	r3, #1
+	ldr	r1, .L130+36
+	ldr	r0, .L130+40
+	bl	playSoundA
+	ldr	r3, .L130+44
 	mov	lr, pc
 	bx	r3
 	mov	r2, #5
-	ldr	r3, .L130+36
+	ldr	r3, .L130+48
 	ldmfd	sp!, {r4, r5, r6, lr}
 	str	r2, [r3]
 	bx	lr
@@ -1070,6 +1083,9 @@ goToLose:
 	.word	losebgTiles
 	.word	100726784
 	.word	losebgMap
+	.word	11025
+	.word	2311783
+	.word	tt
 	.word	waitForVBlank
 	.word	state
 	.size	goToLose, .-goToLose
@@ -1199,8 +1215,8 @@ lose:
 	.word	oldButtons
 	.word	buttons
 	.word	11025
-	.word	2294088
-	.word	likey
+	.word	2170025
+	.word	knocknock
 	.size	lose, .-lose
 	.section	.text.startup,"ax",%progbits
 	.align	2

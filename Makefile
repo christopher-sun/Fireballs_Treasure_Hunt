@@ -1,5 +1,5 @@
 PRODUCT_NAME       = Project
-SOURCES            = main.c myLib.c game.c sprites.c startbg.c losebg.c winbg.c pausebg.c starttopbg.c gamebg.c instructionsbg.c POWER-EXO-8-bits.c pauseaudio.c likey.c
+SOURCES            = main.c myLib.c game.c sprites.c startbg.c losebg.c winbg.c pausebg.c starttopbg.c gamebg.c instructionsbg.c POWER-EXO-8-bits.c pauseaudio.c likey.c tt.c knocknock.c cheerup.c poof.c
 DKPATH             = /Users/Chris/Documents/"CS 2261"/devkitARM/bin
 CCPATH             = /usr/bin/gcc
 VBASIM             = wine /Users/Chris/Documents/"CS 2261"/vba.exe

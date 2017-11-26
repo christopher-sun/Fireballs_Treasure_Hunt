@@ -912,6 +912,18 @@ extern const unsigned char pauseaudio[2182590];
 # 20 "likey.h"
 extern const unsigned char likey[2294088];
 # 51 "main.c" 2
+# 1 "tt.h" 1
+# 20 "tt.h"
+extern const unsigned char tt[2311783];
+# 52 "main.c" 2
+# 1 "knocknock.h" 1
+# 20 "knocknock.h"
+extern const unsigned char knocknock[2170025];
+# 53 "main.c" 2
+# 1 "cheerup.h" 1
+# 20 "cheerup.h"
+extern const unsigned char cheerup[2249917];
+# 54 "main.c" 2
 
 void initialize();
 
@@ -1009,7 +1021,7 @@ void initialize() {
     setupSounds();
     setupInterrupts();
 
-    playSoundA(likey,2294088,11025, 1);
+    playSoundA(knocknock,2170025,11025, 1);
     goToStart();
 
 }
@@ -1246,7 +1258,8 @@ void goToGame() {
  DMANow(3, spritesTiles, &((charblock *)0x6000000)[4], 32768/2);
  DMANow(3, spritesPal, ((unsigned short *)0x5000200), 512/2);
 
-    playSoundA(POWER_EXO_8_bits,2454604,11025, 1);
+
+    playSoundA(likey,2294088,11025, 1);
 
  state = GAME;
 }
@@ -1311,7 +1324,7 @@ void pause() {
  } else if ((!(~(oldButtons)&((1<<2))) && (~buttons & ((1<<2))))) {
         (*(unsigned short *)0x4000000) ^= (1<<8);
         stopSound();
-        playSoundA(likey,2294088,11025, 1);
+        playSoundA(knocknock,2170025,11025, 1);
         goToStart();
     }
 }
@@ -1325,6 +1338,8 @@ void goToWin() {
   DMANow(3, winbgTiles, &((charblock *)0x6000000)[0], 768/2);
   DMANow(3, winbgMap, &((screenblock *)0x6000000)[31], 2048/2);
   hideSprites();
+
+    playSoundA(cheerup,2249917,11025, 1);
 
     waitForVBlank();
 
@@ -1340,7 +1355,7 @@ void win() {
     if ((!(~(oldButtons)&((1<<3))) && (~buttons & ((1<<3))))) {
   (*(unsigned short *)0x4000000) ^= (1<<8);
         stopSound();
-        playSoundA(likey,2294088,11025, 1);
+        playSoundA(knocknock,2170025,11025, 1);
         goToStart();
  }
 }
@@ -1355,6 +1370,8 @@ void goToLose() {
   DMANow(3, losebgMap, &((screenblock *)0x6000000)[31], 2048/2);
 
   hideSprites();
+
+        playSoundA(tt,2311783,11025, 1);
     waitForVBlank();
 
 
@@ -1369,7 +1386,7 @@ void lose() {
     if ((!(~(oldButtons)&((1<<3))) && (~buttons & ((1<<3))))) {
   (*(unsigned short *)0x4000000) ^= (1<<8);
         stopSound();
-        playSoundA(likey,2294088,11025, 1);
+        playSoundA(knocknock,2170025,11025, 1);
   goToStart();
  }
 }

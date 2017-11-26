@@ -2,6 +2,7 @@
 #include "myLib.h"
 #include "game.h"
 #include "sprites.h"
+#include "poof.h"
 
 // Variables
 BULLET bullets[BULLETCOUNT];
@@ -32,6 +33,20 @@ OBJ_ATTR shadowOAM[128]; //@ 40 rn
 //27-31 for bullet
 // 1-5 enemies
 //0 for player
+
+typedef struct{
+    const unsigned char* data;
+    int length;
+    int frequency;
+    int isPlaying;
+    int loops;
+    int duration;
+    int priority;
+    int vbCount;
+}SOUND;
+
+SOUND soundA;
+SOUND soundB;
 
 // Initialize the game
 void initGame() {
@@ -130,6 +145,7 @@ void updatePlayer() {
 
 	// Fire bullets
 	if (BUTTON_PRESSED(BUTTON_A)) {
+		playSoundB(poof,POOFLEN,POOFFREQ, 0);
 		fireBullet();
 	}
 	if(BUTTON_HELD(BUTTON_LEFT) && player.col > 0) {

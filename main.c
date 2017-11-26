@@ -48,6 +48,9 @@ For the future:
 #include "POWER-EXO-8-bits.h"
 #include "pauseaudio.h"
 #include "likey.h"
+#include "tt.h"
+#include "knocknock.h"
+#include "cheerup.h"
 
 void initialize();
 
@@ -145,7 +148,7 @@ void initialize() {
     setupSounds();
     setupInterrupts();
 
-    playSoundA(likey,LIKEYLEN,LIKEYFREQ, 1);
+    playSoundA(knocknock,KNOCKNOCKLEN,KNOCKNOCKFREQ, 1);
     goToStart();
 
 }
@@ -382,7 +385,8 @@ void goToGame() {
 	DMANow(3, spritesTiles, &CHARBLOCK[4], spritesTilesLen/2);
 	DMANow(3, spritesPal, SPRITEPALETTE, spritesPalLen/2);
 
-    playSoundA(POWER_EXO_8_bits,POWER_EXO_8_BITSLEN,POWER_EXO_8_BITSFREQ, 1);
+    // playSoundA(POWER_EXO_8_bits,POWER_EXO_8_BITSLEN,POWER_EXO_8_BITSFREQ, 1);
+    playSoundA(likey,LIKEYLEN,LIKEYFREQ, 1);
 
 	state = GAME;
 }
@@ -447,7 +451,7 @@ void pause() {
 	} else if (BUTTON_PRESSED(BUTTON_SELECT)) {
         REG_DISPCTL ^= BG0_ENABLE;
         stopSound();
-        playSoundA(likey,LIKEYLEN,LIKEYFREQ, 1);
+        playSoundA(knocknock,KNOCKNOCKLEN,KNOCKNOCKFREQ, 1);
         goToStart();
     }
 }
@@ -461,6 +465,8 @@ void goToWin() {
 		DMANow(3, winbgTiles, &CHARBLOCK[0], winbgTilesLen/2);
 		DMANow(3, winbgMap, &SCREENBLOCK[31], winbgMapLen/2);
 		hideSprites();
+
+    playSoundA(cheerup,CHEERUPLEN,CHEERUPFREQ, 1);
 
     waitForVBlank();
 
@@ -476,7 +482,7 @@ void win() {
     if (BUTTON_PRESSED(BUTTON_START)) {
 		REG_DISPCTL ^= BG0_ENABLE;
         stopSound();
-        playSoundA(likey,LIKEYLEN,LIKEYFREQ, 1);
+        playSoundA(knocknock,KNOCKNOCKLEN,KNOCKNOCKFREQ, 1);
         goToStart();
 	}
 }
@@ -491,6 +497,8 @@ void goToLose() {
 		DMANow(3, losebgMap, &SCREENBLOCK[31], losebgMapLen/2);
 
 		hideSprites();
+
+        playSoundA(tt,TTLEN,TTFREQ, 1);
     waitForVBlank();
 
 
@@ -505,7 +513,7 @@ void lose() {
     if (BUTTON_PRESSED(BUTTON_START)) {
 		REG_DISPCTL ^= BG0_ENABLE;
         stopSound();
-        playSoundA(likey,LIKEYLEN,LIKEYFREQ, 1);
+        playSoundA(knocknock,KNOCKNOCKLEN,KNOCKNOCKFREQ, 1);
 		goToStart();
 	}
 }

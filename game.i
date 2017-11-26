@@ -821,6 +821,16 @@ void initTreasure();
 void updateTreasure(ANISPRITE *);
 void drawTreasure();
 void fireTreasure(int);
+
+void setupSounds();
+void playSoundA( const unsigned char* sound, int length, int frequency, int loops);
+void playSoundB( const unsigned char* sound, int length, int frequency, int loops);
+void muteSound();
+void unmuteSound();
+void stopSound();
+
+void setupInterrupts();
+void interruptHandler();
 # 4 "game.c" 2
 # 1 "sprites.h" 1
 # 21 "sprites.h"
@@ -829,6 +839,10 @@ extern const unsigned short spritesTiles[16384];
 
 extern const unsigned short spritesPal[256];
 # 5 "game.c" 2
+# 1 "poof.h" 1
+# 20 "poof.h"
+extern const unsigned char poof[5103];
+# 6 "game.c" 2
 
 
 BULLET bullets[5];
@@ -853,7 +867,28 @@ const int accel = -1;
 
 
 OBJ_ATTR shadowOAM[128];
-# 37 "game.c"
+
+
+
+
+
+
+
+typedef struct{
+    const unsigned char* data;
+    int length;
+    int frequency;
+    int isPlaying;
+    int loops;
+    int duration;
+    int priority;
+    int vbCount;
+}SOUND;
+
+SOUND soundA;
+SOUND soundB;
+
+
 void initGame() {
 
  initPlayer();
@@ -950,6 +985,7 @@ void updatePlayer() {
 
 
  if ((!(~(oldButtons)&((1<<0))) && (~buttons & ((1<<0))))) {
+  playSoundB(poof,5103,11025, 0);
   fireBullet();
  }
  if((~((*(volatile unsigned short *)0x04000130)) & ((1<<5))) && player.col > 0) {

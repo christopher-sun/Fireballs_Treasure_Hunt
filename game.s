@@ -474,7 +474,7 @@ updatePlayer:
 	beq	.L74
 	ldr	r3, .L102+4
 	ldrh	r3, [r3]
-	tst	r3, #1
+	ands	r3, r3, #1
 	beq	.L98
 .L74:
 	ldr	r3, .L102+8
@@ -550,13 +550,13 @@ updatePlayer:
 	bx	lr
 .L101:
 	ldmia	r4, {ip, lr}
+	ldr	r3, [r5, #20]
+	ldr	r2, [r5, #24]
+	ldmib	r5, {r0, r1}
 	str	lr, [sp, #12]
 	ldr	lr, [r4, #12]
 	str	ip, [sp, #8]
 	ldr	ip, [r4, #8]
-	ldr	r3, [r5, #20]
-	ldr	r2, [r5, #24]
-	ldmib	r5, {r0, r1}
 	stmia	sp, {ip, lr}
 	mov	lr, pc
 	bx	r7
@@ -585,6 +585,12 @@ updatePlayer:
 	streq	ip, [r3, #12]
 	b	.L78
 .L98:
+	ldr	r2, .L102+36
+	ldr	r1, .L102+40
+	ldr	r0, .L102+44
+	ldr	r5, .L102+48
+	mov	lr, pc
+	bx	r5
 	bl	fireBullet
 	ldrh	r2, [r4]
 	b	.L74
@@ -600,6 +606,10 @@ updatePlayer:
 	.word	enemyBullets
 	.word	collision
 	.word	lives
+	.word	11025
+	.word	5103
+	.word	poof
+	.word	playSoundB
 	.size	updatePlayer, .-updatePlayer
 	.align	2
 	.global	fireEnemyBullet
@@ -1442,6 +1452,8 @@ drawTreasure:
 	.word	shadowOAM+330
 	.word	treasures
 	.size	drawTreasure, .-drawTreasure
+	.comm	soundB,32,4
+	.comm	soundA,32,4
 	.comm	shadowOAM,1024,4
 	.global	accel
 	.global	vblankCount
