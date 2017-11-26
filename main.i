@@ -71,6 +71,17 @@ typedef volatile struct {
 extern DMA *dma;
 # 227 "myLib.h"
 void DMANow(int channel, volatile const void *src, volatile void *dst, unsigned int cnt);
+# 317 "myLib.h"
+typedef struct
+{
+ int row;
+ int col;
+ int rdel;
+ int cdel;
+ int size;
+ u16 color;
+ int AI_STATE;
+} MOVOBJ;
 
 
 
@@ -889,6 +900,18 @@ extern const unsigned short instructionsbgMap[1024];
 
 extern const unsigned short instructionsbgPal[256];
 # 48 "main.c" 2
+# 1 "POWER-EXO-8-bits.h" 1
+# 20 "POWER-EXO-8-bits.h"
+extern const unsigned char POWER_EXO_8_bits[2454604];
+# 49 "main.c" 2
+# 1 "pauseaudio.h" 1
+# 20 "pauseaudio.h"
+extern const unsigned char pauseaudio[2182590];
+# 50 "main.c" 2
+# 1 "likey.h" 1
+# 20 "likey.h"
+extern const unsigned char likey[2294088];
+# 51 "main.c" 2
 
 void initialize();
 
@@ -906,9 +929,33 @@ void win();
 void goToLose();
 void lose();
 
+void setupSounds();
+void playSoundA( const unsigned char* sound, int length, int frequency, int loops);
+void playSoundB( const unsigned char* sound, int length, int frequency, int loops);
+void muteSound();
+void unmuteSound();
+void stopSound();
+
+void setupInterrupts();
+void interruptHandler();
+
 enum {START, INSTRUCTIONS, GAME, PAUSE, WIN, LOSE};
 int state;
 int seed;
+
+typedef struct{
+    const unsigned char* data;
+    int length;
+    int frequency;
+    int isPlaying;
+    int loops;
+    int duration;
+    int priority;
+    int vbCount;
+}SOUND;
+
+SOUND soundA;
+SOUND soundB;
 
 unsigned short buttons;
 unsigned short oldButtons;
@@ -959,8 +1006,171 @@ void initialize() {
  (*(volatile unsigned short*)0x400000A) = (0<<14) | ((0)<<2) | ((31)<<8);
  (*(volatile unsigned short*)0x4000008) = (0<<14) | ((1)<<2) | ((30)<<8);
 
+    setupSounds();
+    setupInterrupts();
+
+    playSoundA(likey,2294088,11025, 1);
     goToStart();
 
+}
+
+
+void setupSounds()
+{
+    *(volatile u16 *)0x04000084 = (1<<7);
+
+ *(volatile u16*)0x04000082 = (1<<1) |
+                     (1<<2) |
+                     (3<<8) |
+                     (0<<10) |
+                     (1<<11) |
+                     (1<<3) |
+                     (3<<12) |
+                     (1<<14) |
+                     (1<<15);
+
+ *(u16*)0x04000080 = 0;
+}
+
+void playSoundA( const unsigned char* sound, int length, int frequency, int loops) {
+        dma[1].cnt = 0;
+
+        int ticks = (16777216)/frequency;
+
+        DMANow(1, sound, (u16*)0x040000A0, (2 << 21) | (3 << 28) | (1 << 25) | (1 << 26));
+
+        *(volatile unsigned short*)0x4000102 = 0;
+
+        *(volatile unsigned short*)0x4000100 = -ticks;
+        *(volatile unsigned short*)0x4000102 = (1<<7);
+
+
+
+        soundA.data = sound;
+        soundA.length = length;
+        soundA.frequency = frequency;
+        soundA.duration = (59.727) * length / frequency;
+        soundA.vbCount = 0;
+        soundA.isPlaying = 1;
+        soundA.loops = loops;
+}
+
+
+void playSoundB( const unsigned char* sound, int length, int frequency, int loops) {
+
+        dma[2].cnt = 0;
+
+        int ticks = (16777216)/frequency;
+
+        DMANow(2, sound, (u16*)0x040000A4, (2 << 21) | (3 << 28) | (1 << 25) | (1 << 26));
+
+        *(volatile unsigned short*)0x4000106 = 0;
+
+        *(volatile unsigned short*)0x4000104 = -ticks;
+        *(volatile unsigned short*)0x4000106 = (1<<7);
+
+
+
+        soundB.data = sound;
+        soundB.length = length;
+        soundB.frequency = frequency;
+        soundB.duration = (59.727) * length / frequency;
+        soundB.vbCount = 0;
+        soundB.isPlaying = 1;
+        soundB.loops = loops;
+}
+
+void pauseSound()
+{
+
+    if (soundA.isPlaying) {
+        soundA.isPlaying = 0;
+        *(volatile unsigned short*)0x4000102 = 0;
+    }
+    if (soundB.isPlaying) {
+        soundB.isPlaying = 0;
+        *(volatile unsigned short*)0x4000106 = 0;
+    }
+}
+
+void unpauseSound()
+{
+
+    if (!soundA.isPlaying) {
+        soundA.isPlaying = 1;
+        *(volatile unsigned short*)0x4000102 = (1<<7);;
+    }
+    if (!soundB.isPlaying) {
+        soundB.isPlaying = 1;
+        *(volatile unsigned short*)0x4000106 = (1<<7);
+    }
+
+}
+
+void stopSound()
+{
+
+    if (soundA.isPlaying) {
+        soundA.isPlaying = 0;
+        dma[1].cnt = 0;
+        *(volatile unsigned short*)0x4000102 = 0;
+    }
+    if (soundB.isPlaying) {
+        soundB.isPlaying = 0;
+        dma[2].cnt = 0;
+        *(volatile unsigned short*)0x4000106 = 0;
+    }
+}
+
+void setupInterrupts()
+{
+ *(unsigned short*)0x4000208 = 0;
+
+
+
+    *(unsigned int*)0x3007FFC = (unsigned int) interruptHandler;
+
+ *(unsigned short*)0x4000200 |= 1 << 0;
+ *(unsigned short*)0x4000004 |= 1 << 3;
+ *(unsigned short*)0x4000208 = 1;
+}
+
+void interruptHandler()
+{
+ *(unsigned short*)0x4000208 = 0;
+ if(*(volatile unsigned short*)0x4000202 & 1 << 0)
+ {
+
+
+        if (soundA.isPlaying) {
+            soundA.vbCount++;
+            if (soundA.vbCount == soundA.duration) {
+                if (soundA.loops) {
+                    playSoundA(soundA.data, soundA.length, soundA.frequency, soundA.loops);
+                } else {
+                    soundA.isPlaying = 0;
+                    dma[1].cnt = 0;
+                    *(volatile unsigned short*)0x4000102 = 0;
+                }
+            }
+        }
+        if (soundB.isPlaying) {
+            soundB.vbCount++;
+            if (soundB.vbCount == soundB.duration) {
+                if (soundB.loops) {
+                    playSoundB(soundB.data, soundB.length, soundB.frequency, soundB.loops);
+                } else {
+                    soundB.isPlaying = 0;
+                    dma[2].cnt = 0;
+                    *(volatile unsigned short*)0x4000106 = 0;
+                }
+            }
+        }
+
+  *(volatile unsigned short*)0x4000202 = 1 << 0;
+ }
+
+ *(unsigned short*)0x4000208 = 1;
 }
 
 
@@ -975,6 +1185,8 @@ void goToStart() {
  DMANow(3, startbgMap, &((screenblock *)0x6000000)[31], 2048/2);
  DMANow(3, starttopbgTiles, &((charblock *)0x6000000)[1], 1824/2);
  DMANow(3, starttopbgMap, &((screenblock *)0x6000000)[30], 2048/2);
+
+
 
     waitForVBlank();
 
@@ -1034,7 +1246,7 @@ void goToGame() {
  DMANow(3, spritesTiles, &((charblock *)0x6000000)[4], 32768/2);
  DMANow(3, spritesPal, ((unsigned short *)0x5000200), 512/2);
 
-
+    playSoundA(POWER_EXO_8_bits,2454604,11025, 1);
 
  state = GAME;
 }
@@ -1051,8 +1263,10 @@ void game() {
     waitForVBlank();
 
 
-    if ((!(~(oldButtons)&((1<<3))) && (~buttons & ((1<<3)))))
+    if ((!(~(oldButtons)&((1<<3))) && (~buttons & ((1<<3))))) {
+        pauseSound();
         goToPause();
+    }
     else if (youLose == 1 || lives == 0)
         goToLose();
     else if (enemysRemaining == 0 || (!(~(oldButtons)&((1<<2))) && (~buttons & ((1<<2)))))
@@ -1070,6 +1284,7 @@ void goToPause() {
  DMANow(3, pausebgTiles, &((charblock *)0x6000000)[0], 192/2);
  DMANow(3, pausebgMap, &((screenblock *)0x6000000)[31], 2048/2);
 
+    playSoundB(pauseaudio,2182590,11025, 1);
 
     waitForVBlank();
 
@@ -1090,9 +1305,13 @@ void pause() {
 
   DMANow(3, spritesTiles, &((charblock *)0x6000000)[4], 32768/2);
   DMANow(3, spritesPal, ((unsigned short *)0x5000200), 512/2);
+        stopSound();
+        unpauseSound();
   state = GAME;
  } else if ((!(~(oldButtons)&((1<<2))) && (~buttons & ((1<<2))))) {
         (*(unsigned short *)0x4000000) ^= (1<<8);
+        stopSound();
+        playSoundA(likey,2294088,11025, 1);
         goToStart();
     }
 }
@@ -1120,6 +1339,8 @@ void win() {
 
     if ((!(~(oldButtons)&((1<<3))) && (~buttons & ((1<<3))))) {
   (*(unsigned short *)0x4000000) ^= (1<<8);
+        stopSound();
+        playSoundA(likey,2294088,11025, 1);
         goToStart();
  }
 }
@@ -1147,6 +1368,8 @@ void lose() {
 
     if ((!(~(oldButtons)&((1<<3))) && (~buttons & ((1<<3))))) {
   (*(unsigned short *)0x4000000) ^= (1<<8);
+        stopSound();
+        playSoundA(likey,2294088,11025, 1);
   goToStart();
  }
 }

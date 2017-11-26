@@ -45,6 +45,9 @@ For the future:
 #include "starttopbg.h"
 #include "gamebg.h"
 #include "instructionsbg.h"
+#include "POWER-EXO-8-bits.h"
+#include "pauseaudio.h"
+#include "likey.h"
 
 void initialize();
 
@@ -62,9 +65,33 @@ void win();
 void goToLose();
 void lose();
 
+void setupSounds();
+void playSoundA( const unsigned char* sound, int length, int frequency, int loops);
+void playSoundB( const unsigned char* sound, int length, int frequency, int loops);
+void muteSound();
+void unmuteSound();
+void stopSound();
+
+void setupInterrupts();
+void interruptHandler();
+
 enum {START, INSTRUCTIONS, GAME, PAUSE, WIN, LOSE};
 int state;
 int seed;
+
+typedef struct{
+    const unsigned char* data;
+    int length;
+    int frequency;
+    int isPlaying;
+    int loops;
+    int duration;
+    int priority;
+    int vbCount;
+}SOUND;
+
+SOUND soundA;
+SOUND soundB;
 
 unsigned short buttons;
 unsigned short oldButtons;
@@ -115,8 +142,171 @@ void initialize() {
 	REG_BG1CNT = BG_SIZE_SMALL | BG_CHARBLOCK(0) | BG_SCREENBLOCK(31);
 	REG_BG0CNT = BG_SIZE_SMALL | BG_CHARBLOCK(1) | BG_SCREENBLOCK(30);
 
+    setupSounds();
+    setupInterrupts();
+
+    playSoundA(likey,LIKEYLEN,LIKEYFREQ, 1);
     goToStart();
 
+}
+
+//sets up all the sound stuff
+void setupSounds()
+{
+    REG_SOUNDCNT_X = SND_ENABLED;
+
+	REG_SOUNDCNT_H = SND_OUTPUT_RATIO_100 |
+                     DSA_OUTPUT_RATIO_100 |
+                     DSA_OUTPUT_TO_BOTH |
+                     DSA_TIMER0 |
+                     DSA_FIFO_RESET |
+                     DSB_OUTPUT_RATIO_100 |
+                     DSB_OUTPUT_TO_BOTH |
+                     DSB_TIMER1 |
+                     DSB_FIFO_RESET;
+
+	REG_SOUNDCNT_L = 0;
+}
+
+void playSoundA( const unsigned char* sound, int length, int frequency, int loops) {
+        dma[1].cnt = 0;
+
+        int ticks = PROCESSOR_CYCLES_PER_SECOND/frequency;
+
+        DMANow(1, sound, REG_FIFO_A, DMA_DESTINATION_FIXED | DMA_AT_REFRESH | DMA_REPEAT | DMA_32);
+
+        REG_TM0CNT = 0;
+
+        REG_TM0D = -ticks;
+        REG_TM0CNT = TIMER_ON;
+
+        //TODO: FINISH THIS FUNCTION
+        // Assign all the appropriate struct values (excluding priority)
+        soundA.data = sound;
+        soundA.length = length;
+        soundA.frequency = frequency;
+        soundA.duration = VBLANK_FREQ * length / frequency;
+        soundA.vbCount = 0;
+        soundA.isPlaying = 1;
+        soundA.loops = loops;
+}
+
+
+void playSoundB( const unsigned char* sound, int length, int frequency, int loops) {
+
+        dma[2].cnt = 0;
+
+        int ticks = PROCESSOR_CYCLES_PER_SECOND/frequency;
+
+        DMANow(2, sound, REG_FIFO_B, DMA_DESTINATION_FIXED | DMA_AT_REFRESH | DMA_REPEAT | DMA_32);
+
+        REG_TM1CNT = 0;
+
+        REG_TM1D = -ticks;
+        REG_TM1CNT = TIMER_ON;
+
+        // TODO: FINISH THIS FUNCTION
+        // Assign all the appropriate struct values
+        soundB.data = sound;
+        soundB.length = length;
+        soundB.frequency = frequency;
+        soundB.duration = VBLANK_FREQ * length / frequency;
+        soundB.vbCount = 0;
+        soundB.isPlaying = 1;
+        soundB.loops = loops;
+}
+
+void pauseSound()
+{
+	// TODO: WRITE THIS FUNCTION
+    if (soundA.isPlaying) {
+        soundA.isPlaying = 0;
+        REG_TM0CNT = 0;
+    }
+    if (soundB.isPlaying) {
+        soundB.isPlaying = 0;
+        REG_TM1CNT = 0;
+    }
+}
+
+void unpauseSound()
+{
+	// TODO: WRITE THIS FUNCTION
+    if (!soundA.isPlaying) {
+        soundA.isPlaying = 1;
+        REG_TM0CNT = TIMER_ON;;
+    }
+    if (!soundB.isPlaying) {
+        soundB.isPlaying = 1;
+        REG_TM1CNT = TIMER_ON;
+    }
+
+}
+
+void stopSound()
+{
+    // TODO: WRITE THIS FUNCTION
+    if (soundA.isPlaying) {
+        soundA.isPlaying = 0;
+        dma[1].cnt = 0;
+        REG_TM0CNT = 0;
+    }
+    if (soundB.isPlaying) {
+        soundB.isPlaying = 0;
+        dma[2].cnt = 0;
+        REG_TM1CNT = 0;
+    }
+}
+
+void setupInterrupts()
+{
+	REG_IME = 0;
+	// TODO: SET UP THE INTERRUPT HANDLER HERE
+	// HINT: THERE IS A REGISTER THAT NEEDS TO POINT TO A INTERRUPT FUNCTION
+	// HINT: THAT INTERRUPT FUNCTION HAS TO BE CAST TO SOMETHING...
+    REG_INTERRUPT = (unsigned int) interruptHandler;
+
+	REG_IE |= INT_VBLANK;
+	REG_DISPSTAT |= INT_VBLANK_ENABLE;
+	REG_IME = 1;
+}
+
+void interruptHandler()
+{
+	REG_IME = 0;
+	if(REG_IF & INT_VBLANK)
+	{
+		//TODO: FINISH THIS FUNCTION
+		// This should be where you determine if a sound if finished or not
+        if (soundA.isPlaying) {
+            soundA.vbCount++;
+            if (soundA.vbCount == soundA.duration) {
+                if (soundA.loops) {
+                    playSoundA(soundA.data, soundA.length, soundA.frequency, soundA.loops);
+                } else {
+                    soundA.isPlaying = 0;
+                    dma[1].cnt = 0;
+                    REG_TM0CNT = 0;
+                }
+            }
+        }
+        if (soundB.isPlaying) {
+            soundB.vbCount++;
+            if (soundB.vbCount == soundB.duration) {
+                if (soundB.loops) {
+                    playSoundB(soundB.data, soundB.length, soundB.frequency, soundB.loops);
+                } else {
+                    soundB.isPlaying = 0;
+                    dma[2].cnt = 0;
+                    REG_TM1CNT = 0;
+                }
+            }
+        }
+
+		REG_IF = INT_VBLANK;
+	}
+
+	REG_IME = 1;
 }
 
 // Sets up the start state
@@ -131,6 +321,8 @@ void goToStart() {
 	DMANow(3, startbgMap, &SCREENBLOCK[31], startbgMapLen/2);
 	DMANow(3, starttopbgTiles, &CHARBLOCK[1], starttopbgTilesLen/2);
 	DMANow(3, starttopbgMap, &SCREENBLOCK[30], starttopbgMapLen/2);
+
+
 
     waitForVBlank();
 
@@ -190,7 +382,7 @@ void goToGame() {
 	DMANow(3, spritesTiles, &CHARBLOCK[4], spritesTilesLen/2);
 	DMANow(3, spritesPal, SPRITEPALETTE, spritesPalLen/2);
 
-
+    playSoundA(POWER_EXO_8_bits,POWER_EXO_8_BITSLEN,POWER_EXO_8_BITSFREQ, 1);
 
 	state = GAME;
 }
@@ -207,8 +399,10 @@ void game() {
     waitForVBlank();
     // flipPage();
 
-    if (BUTTON_PRESSED(BUTTON_START))
+    if (BUTTON_PRESSED(BUTTON_START)) {
+        pauseSound();
         goToPause();
+    }
     else if (youLose == 1 || lives == 0)
         goToLose();
     else if (enemysRemaining == 0 || BUTTON_PRESSED(BUTTON_SELECT))
@@ -226,6 +420,7 @@ void goToPause() {
 	DMANow(3, pausebgTiles, &CHARBLOCK[0], pausebgTilesLen/2);
 	DMANow(3, pausebgMap, &SCREENBLOCK[31], pausebgMapLen/2);
 
+    playSoundB(pauseaudio,PAUSEAUDIOLEN,PAUSEAUDIOFREQ, 1);
 
     waitForVBlank();
 
@@ -246,9 +441,13 @@ void pause() {
 
 		DMANow(3, spritesTiles, &CHARBLOCK[4], spritesTilesLen/2);
 		DMANow(3, spritesPal, SPRITEPALETTE, spritesPalLen/2);
+        stopSound();
+        unpauseSound();
 		state = GAME;
 	} else if (BUTTON_PRESSED(BUTTON_SELECT)) {
         REG_DISPCTL ^= BG0_ENABLE;
+        stopSound();
+        playSoundA(likey,LIKEYLEN,LIKEYFREQ, 1);
         goToStart();
     }
 }
@@ -276,6 +475,8 @@ void win() {
 
     if (BUTTON_PRESSED(BUTTON_START)) {
 		REG_DISPCTL ^= BG0_ENABLE;
+        stopSound();
+        playSoundA(likey,LIKEYLEN,LIKEYFREQ, 1);
         goToStart();
 	}
 }
@@ -303,6 +504,8 @@ void lose() {
 
     if (BUTTON_PRESSED(BUTTON_START)) {
 		REG_DISPCTL ^= BG0_ENABLE;
+        stopSound();
+        playSoundA(likey,LIKEYLEN,LIKEYFREQ, 1);
 		goToStart();
 	}
 }

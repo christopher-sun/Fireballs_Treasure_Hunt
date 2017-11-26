@@ -712,6 +712,17 @@ typedef volatile struct {
 extern DMA *dma;
 # 227 "myLib.h"
 void DMANow(int channel, volatile const void *src, volatile void *dst, unsigned int cnt);
+# 317 "myLib.h"
+typedef struct
+{
+ int row;
+ int col;
+ int rdel;
+ int cdel;
+ int size;
+ u16 color;
+ int AI_STATE;
+} MOVOBJ;
 
 
 
