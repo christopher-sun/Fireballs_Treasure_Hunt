@@ -743,6 +743,7 @@ typedef struct {
  int curFrame;
  int numFrames;
  int treasure;
+ int superBullet;
 } BULLET;
 
 
@@ -777,18 +778,27 @@ typedef struct {
  int active;
  int number;
  int onScreen;
+ int superMode;
 } ANISPRITE;
-# 69 "game.h"
+# 73 "game.h"
 extern ANISPRITE player;
-extern BULLET bullets[5];
+extern BULLET bullets[3];
 extern ENEMY enemys[5];
 extern int enemysRemaining;
 extern int enemyBulletTimer;
 extern ANISPRITE enemy;
-extern int youLose;
+
 extern int lives;
 extern int scoreCol1;
 extern int scoreCol2;
+extern BULLET superBullets[5];
+extern BULLET enemyBullets[5];
+extern ANISPRITE special;
+extern ANISPRITE specials[1];
+extern int superFired;
+extern int specialCollected;
+extern int specialActive;
+extern int tired;
 
 
 
@@ -821,6 +831,11 @@ void initTreasure();
 void updateTreasure(ANISPRITE *);
 void drawTreasure();
 void fireTreasure(int);
+void initSuperBullets();
+void initSpecial();
+void updateSpecial(ANISPRITE *);
+void drawSpecial();
+void fireSpecial(int);
 
 void setupSounds();
 void playSoundA( const unsigned char* sound, int length, int frequency, int loops);
@@ -845,12 +860,14 @@ extern const unsigned char poof[5103];
 # 6 "game.c" 2
 
 
-BULLET bullets[5];
+
+BULLET bullets[3];
 BULLET enemyBullets[5];
 ENEMY enemys[5];
 int enemysRemaining;
+BULLET superBullets[5];
 
-int youLose;
+
 int lives;
 int enemyBulletTimer;
 
@@ -858,9 +875,18 @@ ANISPRITE player;
 
 ANISPRITE treasure;
 ANISPRITE treasures[5];
+ANISPRITE special;
+ANISPRITE specials[1];
 
 int scoreCol1;
 int scoreCol2;
+
+int superFired;
+int specialCollected;
+int specialActive;
+
+int tired;
+int alreadyDrop = 0;
 
 int vblankCount = 0;
 const int accel = -1;
@@ -895,15 +921,17 @@ void initGame() {
     initBullets();
     initEnemys();
  initTreasure();
+ initSpecial();
  hideSprites();
 
  enemysRemaining = 5;
  enemyBulletTimer = 0;
- youLose = 0;
- lives = 3;
- scoreCol1 = 2;
- scoreCol2 = 5;
 
+ lives = 3;
+ scoreCol1 = 0;
+ scoreCol2 = 5;
+ superFired = 0;
+ specialCollected = 0;
 }
 
 
@@ -912,15 +940,18 @@ void updateGame() {
  updatePlayer();
  enemyBulletTimer++;
  if (enemyBulletTimer == 100) {
-  fireEnemyBullet();
   fireEnemy();
+  if (alreadyDrop == 0) {
+   fireEnemyBullet();
+
+  }
   enemyBulletTimer = 0;
  }
 
  DMANow(3, shadowOAM, ((OBJ_ATTR*)(0x7000000)), 128*4);
 
 
- for (int i = 0; i < 5; i++)
+ for (int i = 0; i < 3; i++)
   updateBullet(&bullets[i]);
 
 
@@ -932,6 +963,9 @@ void updateGame() {
 
  for (int i = 0; i < 5; i++)
   updateTreasure(&treasures[i]);
+
+ for (int i = 0; i < 1; i++)
+  updateSpecial(&specials[i]);
 }
 
 
@@ -945,6 +979,7 @@ void drawGame() {
  drawScore();
  drawLives();
  drawTreasure();
+ drawSpecial();
 
  waitForVBlank();
  vblankCount++;
@@ -953,18 +988,18 @@ void drawGame() {
 void drawScore() {
  shadowOAM[38].attr0 = 0 | (0<<13) | (0<<14);
  shadowOAM[38].attr1 = 73 | (0<<14);
- shadowOAM[38].attr2 = ((0)<<12) | ((6)*32+(scoreCol1));
+ shadowOAM[38].attr2 = ((0)<<12) | ((7)*32+(scoreCol1));
 
  shadowOAM[39].attr0 = 0 | (0<<13) | (0<<14);
  shadowOAM[39].attr1 = 78 | (0<<14);
- shadowOAM[39].attr2 = ((0)<<12) | ((6)*32+(scoreCol2));
+ shadowOAM[39].attr2 = ((0)<<12) | ((7)*32+(scoreCol2));
 
 }
 
 void drawLives() {
  shadowOAM[40].attr0 = 0 | (0<<13) | (0<<14);
  shadowOAM[40].attr1 = (240 - 8) | (0<<14);
- shadowOAM[40].attr2 = ((0)<<12) | ((6)*32+(lives));
+ shadowOAM[40].attr2 = ((0)<<12) | ((7)*32+(lives));
 }
 
 
@@ -973,26 +1008,48 @@ void initPlayer() {
  player.width = 16;
     player.height = 16;
     player.rdel = 20;
-    player.cdel = 1;
+    player.cdel = 2;
 
  player.col = 240/2-player.height/2;
  player.row = 160 - 20;
-
+ player.superMode = 0;
+ player.curFrame = 0;
+ player.numFrames = 2;
+ player.aniCounter = 0;
+ tired = 0;
 }
 
 
 void updatePlayer() {
 
 
+
+
+
+ player.aniCounter++;
+ if (player.aniCounter % 40 == 0) {
+  player.curFrame++;
+ }
+
+
+ if (superFired == 5) {
+  player.superMode = 0;
+  superFired = 0;
+  specialCollected = 0;
+  specialActive = 0;
+  initSpecial();
+ }
+
+
  if ((!(~(oldButtons)&((1<<0))) && (~buttons & ((1<<0))))) {
-  playSoundB(poof,5103,11025, 0);
   fireBullet();
+# 201 "game.c"
  }
  if((~((*(volatile unsigned short *)0x04000130)) & ((1<<5))) && player.col > 0) {
-  player.col--;
+  player.col-= player.cdel;
  }
  if((~((*(volatile unsigned short *)0x04000130)) & ((1<<4))) && player.col + player.width < 240) {
-  player.col++;
+  player.col+= player.cdel;
  }
 
 
@@ -1009,9 +1066,21 @@ void updatePlayer() {
 
  if ((!(~(oldButtons)&((1<<1))) && (~buttons & ((1<<1))))) {
   player.groundRow -= 10;
-  if (player.row >= player.groundRow) {
-   player.row = player.groundRow;
-  }
+ }
+
+ if (player.row >= player.groundRow) {
+  player.row = player.groundRow;
+ }
+
+ if ((!(~(oldButtons)&((1<<7))) && (~buttons & ((1<<7)))) && specialCollected) {
+  if (!player.superMode)
+   player.superMode = 1;
+
+  scoreCol2 = 5;
+ }
+
+ if (player.row - 1 <= 0) {
+  lives = 0;
  }
 
 
@@ -1022,6 +1091,13 @@ void updatePlayer() {
 
    enemyBullets[i].active = 0;
    lives--;
+   alreadyDrop = 0;
+  }
+ }
+
+ if (tired && bullets[3 - 1].active) {
+  if (!bullets[0].active) {
+   tired = 0;
   }
  }
 }
@@ -1029,17 +1105,34 @@ void updatePlayer() {
 
 void drawPlayer() {
 
- shadowOAM[0].attr0 = player.row | (0<<13) | (0<<14);
- shadowOAM[0].attr1 = player.col | (1<<14);
- shadowOAM[0].attr2 = ((0)<<12) | ((0)*32+(0));
-
+ if (!player.superMode) {
+  if (tired) {
+   shadowOAM[0].attr0 = player.row | (0<<13) | (0<<14);
+   shadowOAM[0].attr1 = player.col | (1<<14);
+   shadowOAM[0].attr2 = ((0)<<12) | (((player.curFrame % player.numFrames) * 2)*32+(player.superMode + 6));
+  } else {
+   shadowOAM[0].attr0 = player.row | (0<<13) | (0<<14);
+   shadowOAM[0].attr1 = player.col | (1<<14);
+   shadowOAM[0].attr2 = ((0)<<12) | (((player.curFrame % player.numFrames) * 2)*32+(player.superMode));
+  }
+ } else {
+  if (tired) {
+   shadowOAM[0].attr0 = player.row | (0<<13) | (0<<14);
+   shadowOAM[0].attr1 = player.col | (1<<14);
+   shadowOAM[0].attr2 = ((0)<<12) | (((player.curFrame % player.numFrames) * 2)*32+(player.superMode * 4));
+  } else {
+   shadowOAM[0].attr0 = player.row | (0<<13) | (0<<14);
+   shadowOAM[0].attr1 = player.col | (1<<14);
+   shadowOAM[0].attr2 = ((0)<<12) | (((player.curFrame % player.numFrames) * 2)*32+(player.superMode * 2));
+  }
+ }
 
 }
 
 
 void initBullets() {
 
- for (int i = 0; i < 5; i++) {
+ for (int i = 0; i < 3; i++) {
 
   bullets[i].height = 8;
   bullets[i].width = 8;
@@ -1048,25 +1141,41 @@ void initBullets() {
   bullets[i].rdel = -2;
   bullets[i].cdel = 0;
   bullets[i].active = 0;
+  bullets[i].superBullet = 0;
  }
 
  for (int i = 0; i < 5; i++) {
   enemyBullets[i].height = 8;
   enemyBullets[i].width = 8;
-  enemyBullets[i].row = -bullets[i].height;
+  enemyBullets[i].row = 0;
   enemyBullets[i].col = 0;
   enemyBullets[i].rdel = 1;
   enemyBullets[i].cdel = 0;
   enemyBullets[i].active = 0;
   enemyBullets[i].treasure = i;
  }
+ alreadyDrop = 0;
+}
+
+void initSuperBullets() {
+ for (int i = 0; i < 5; i++) {
+  superBullets[i].height = 8;
+  superBullets[i].width = 8;
+  superBullets[i].row = 0;
+  superBullets[i].col = 0;
+  superBullets[i].rdel = -4;
+  superBullets[i].cdel = 0;
+  superBullets[i].active = 0;
+  superBullets[i].treasure = i;
+ }
+ scoreCol2 = 5;
 }
 
 
 void fireBullet() {
 
 
- for (int i = 0; i < 5; i++) {
+ for (int i = 0; i < 3; i++) {
   if (!bullets[i].active) {
 
 
@@ -1076,10 +1185,23 @@ void fireBullet() {
 
 
    bullets[i].active = 1;
+   if (player.superMode) {
+    bullets[i].superBullet = 1;
+   } else {
+    bullets[i].superBullet = 0;
+   }
+   playSoundB(poof,5103,11025, 0);
    drawBullet();
 
 
+
+
+
+
    break;
+  }
+  if (i == 3 - 2) {
+   tired = 1;
   }
  }
 }
@@ -1096,6 +1218,7 @@ void fireEnemyBullet() {
 
 
     enemyBullets[i].active = 1;
+    alreadyDrop = 1;
     drawEnemyBullet();
 
     break;
@@ -1108,13 +1231,64 @@ void updateBullet(BULLET* b) {
 
 
  if (b->active) {
-  if (b->row + b->height-1 >= 0
-            && b->col + b->cdel > 0
-            && b->col + b->cdel < 240 -1) {
+  if ( !b->superBullet) {
+   if (!player.superMode) {
+    if (b->row + b->height-1 >= 0
+     && b->row <= player.groundRow
+              && b->col + b->cdel > 0
+              && b->col + b->cdel < 240 -1) {
+     b->rdel = -2;
+     b->row += b->rdel;
+    } else {
+     b->active = 0;
+    }
+   } else {
+    if (b->row + b->height-1 >= 0
+     && b->row <= player.groundRow
+              && b->col + b->cdel > 0
+              && b->col + b->cdel < 240 -1) {
+     b->rdel = -2;
+     b->row += b->rdel;
+    } else {
+     b->active = 0;
+    }
+   }
+  } else if (b->superBullet){
+   if (b->row + b->height-1 >= 0
+    && b->row <= player.groundRow
+             && b->col + b->cdel > 0
+             && b->col + b->cdel < 240 -1) {
+    for (int i = 0; i < 5; i++) {
+     if (!player.superMode) {
+      b->active = 0;
+     }
+     if (enemyBullets[i].active) {
+      b->rdel = -2;
 
-   b->row += b->rdel;
-  } else {
-   b->active = 0;
+      if (enemyBullets[i].row < b->row) {
+       b->rdel = -2;
+      } else if (enemyBullets[i].row == b->row) {
+       b->rdel = 0;
+      } else {
+       b->rdel = 2;
+      }
+
+      if (enemyBullets[i].col < b->col) {
+       b->cdel = -2;
+      } else if (enemyBullets[i].col == b->col) {
+       b->cdel = 0;
+      } else {
+       b->cdel = 2;
+      }
+     }
+    }
+
+    b->col += b->cdel;
+    b->row += b->rdel;
+   } else {
+    b->active = 0;
+
+   }
   }
 
 
@@ -1122,7 +1296,17 @@ void updateBullet(BULLET* b) {
    if (enemyBullets[i].active && collision(b->row, b->col, b->height, b->width, enemyBullets[i].row, enemyBullets[i].col, enemyBullets[i].height, enemyBullets[i].width)) {
     b->active = 0;
     enemyBullets[i].active = 0;
-    fireTreasure(i);
+    alreadyDrop = 0;
+
+    if (player.superMode) {
+     superFired++;
+     scoreCol2--;
+    }
+    if (rand()%2 == 1 && !specialActive) {
+     fireSpecial(i);
+    } else {
+     fireTreasure(i);
+    }
 
 
    }
@@ -1134,24 +1318,27 @@ void updateBullet(BULLET* b) {
 void updateEnemyBullet(BULLET* b) {
 
  if (b->active) {
-  if (b->row + b->height-1 <= 160
+  if (b->row + b->height <= player.groundRow + player.height
    && b->col + b->cdel > 0
    && b->col + b->cdel < 240 -1) {
-
-   b->row += b->rdel;
+   if (vblankCount % 1 == 0) {
+    b->row += b->rdel;
+   }
   } else {
    b->active = 0;
+   player.groundRow -= 10;
+   alreadyDrop = 0;
   }
  }
 }
 
 void drawBullet() {
 
- for (int i = 0; i < 5; i++) {
+ for (int i = 0; i < 3; i++) {
   if (bullets[i].active) {
    shadowOAM[i + 27].attr0 = bullets[i].row | (0<<13) | (0<<14);
    shadowOAM[i + 27].attr1 = bullets[i].col | (0<<14);
-   shadowOAM[i + 27].attr2 = ((0)<<12) | ((1)*32+(2));
+   shadowOAM[i + 27].attr2 = ((0)<<12) | ((1)*32+(8));
   } else {
    shadowOAM[i + 27].attr0 = (2<<8);
   }
@@ -1164,7 +1351,7 @@ void drawEnemyBullet() {
   if (enemyBullets[i].active) {
    shadowOAM[i + 32].attr0 = enemyBullets[i].row | (0<<13) | (0<<14);
    shadowOAM[i + 32].attr1 = enemyBullets[i].col | (0<<14);
-   shadowOAM[i + 32].attr2 = ((0)<<12) | ((1)*32+(3));
+   shadowOAM[i + 32].attr2 = ((0)<<12) | ((1)*32+(9));
   } else {
    shadowOAM[i + 32].attr0 = (2<<8);
   }
@@ -1177,7 +1364,7 @@ void initEnemys() {
  for (int i = 0; i < 5; i++) {
 
   enemys[i].height = 8;
-  enemys[i].width = 16;
+  enemys[i].width = 8;
   enemys[i].row = 30;
   enemys[i].col = 0;
   enemys[i].rdel = 1;
@@ -1204,7 +1391,8 @@ void updateEnemy(ENEMY* b) {
   }
 
   if (collision(b->row, b->col, b->height, b->width, player.row, player.col, player.height, player.width)) {
-   youLose = 1;
+   lives--;
+   b->active = 0;
   }
 
 
@@ -1212,7 +1400,7 @@ void updateEnemy(ENEMY* b) {
   b->col += b->cdel;
 
 
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 3; i++) {
    if (bullets[i].active && collision(b->row, b->col, b->height, b->width,
     bullets[i].row, bullets[i].col, bullets[i].height, bullets[i].width)) {
 
@@ -1222,11 +1410,11 @@ void updateEnemy(ENEMY* b) {
 
 
     enemysRemaining--;
-    scoreCol2--;
-    if (enemysRemaining % 10 == 9) {
-     scoreCol1--;
-     scoreCol2 = 9;
-    }
+
+
+
+
+
 
    }
   }
@@ -1254,11 +1442,11 @@ void drawEnemy() {
    shadowOAM[i + 1].attr0 = enemys[i].row | (0<<13) | (0<<14);
    shadowOAM[i + 1].attr1 = enemys[i].col | (0<<14);
    if (i % 5 == 0) {
-    shadowOAM[i + 1].attr2 = ((0)<<12) | ((2 + enemys[i].curFrame)*32+(2));
+    shadowOAM[i + 1].attr2 = ((0)<<12) | ((2 + enemys[i].curFrame)*32+(10));
    } else if (i % 5 == 1) {
-    shadowOAM[i + 1].attr2 = ((0)<<12) | ((2 + enemys[i].curFrame)*32+(1));
+    shadowOAM[i + 1].attr2 = ((0)<<12) | ((2 + enemys[i].curFrame)*32+(9));
    } else {
-    shadowOAM[i + 1].attr2 = ((0)<<12) | ((2 + enemys[i].curFrame)*32+(0));
+    shadowOAM[i + 1].attr2 = ((0)<<12) | ((2 + enemys[i].curFrame)*32+(8));
    }
   } else {
    shadowOAM[i + 1].attr0 = (2<<8);
@@ -1274,7 +1462,7 @@ void initTreasure() {
      treasures[i].rdel = 1;
      treasures[i].cdel = 0;
   treasures[i].width = 8;
-     treasures[i].height = 16;
+     treasures[i].height = 8;
      treasures[i].aniCounter = 0;
      treasures[i].aniState = 0;
      treasures[i].prevAniState = 0;
@@ -1295,7 +1483,7 @@ void updateTreasure(ANISPRITE* a) {
    a->row = a->row - a->rdel;
   }
   if (a->row >= player.groundRow) {
-   a->row = player.groundRow;
+   a->row = player.groundRow + a->height;
   }
 
   if (collision(player.row, player.col, player.height, player.width,
@@ -1324,16 +1512,85 @@ void fireTreasure(int i) {
 
 void drawTreasure() {
  for (int i = 0; i < 5; i++) {
-  if (treasures[i].active ) {
-
-
-
+  if (treasures[i].active) {
    shadowOAM[i + 41].attr0 = treasures[i].row | (0<<13) | (0<<14);
    shadowOAM[i + 41].attr1 = treasures[i].col | (0<<14);
-   shadowOAM[i + 41].attr2 = ((0)<<12) | ((2)*32+(2));
+   shadowOAM[i + 41].attr2 = ((0)<<12) | ((0)*32+(8));
 
   } else {
    shadowOAM[i + 41].attr0 = (2<<8);
+
+  }
+ }
+}
+
+void initSpecial() {
+ for (int i = 0; i < 1; i++) {
+  specials[i].groundRow = player.groundRow;
+  specials[i].row = 0;
+  specials[i].col = 0;
+     specials[i].rdel = 1;
+     specials[i].cdel = 0;
+  specials[i].width = 8;
+     specials[i].height = 8;
+     specials[i].aniCounter = 0;
+     specials[i].aniState = 0;
+     specials[i].prevAniState = 0;
+     specials[i].curFrame = 0;
+     specials[i].numFrames = 1;
+  specials[i].bulletTimer = 0;
+  specials[i].cDirection = 0;
+  specials[i].active = 0;
+ }
+ specialActive = 0;
+}
+
+void updateSpecial(ANISPRITE* a) {
+ if (a->active) {
+
+  if (a->row < player.groundRow && vblankCount % 3 == 0) {
+   a->rdel = a->rdel + accel;
+   a->row = a->row - a->rdel;
+  }
+  if (a->row >= player.groundRow) {
+   a->row = player.groundRow + a->height;
+  }
+
+  if (collision(player.row, player.col, player.height, player.width,
+   a->row, a->col, a->height, a->width)) {
+   a->active = 0;
+   a->rdel = 1;
+   specialCollected = 1;
+
+  }
+
+
+
+ }
+}
+
+void fireSpecial(int i) {
+ for (int j = 0; j < 1; j++) {
+  if (!treasures[j].active) {
+   specials[j].row = enemyBullets[i].row;
+   specials[j].col = enemyBullets[i].col;
+   specials[j].active = 1;
+   specialActive = 1;
+   drawSpecial();
+   break;
+  }
+ }
+}
+
+void drawSpecial() {
+ for (int i = 0; i < 1; i++) {
+  if (specials[i].active) {
+   shadowOAM[i + 46].attr0 = specials[i].row | (0<<13) | (0<<14);
+   shadowOAM[i + 46].attr1 = specials[i].col | (0<<14);
+   shadowOAM[i + 46].attr2 = ((0)<<12) | ((2)*32+(9));
+
+  } else {
+   shadowOAM[i + 46].attr0 = (2<<8);
 
   }
  }

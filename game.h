@@ -22,6 +22,7 @@ typedef struct {
 	int curFrame;
 	int numFrames;
 	int treasure;
+	int superBullet;
 } BULLET;
 
 // Enemy Struct
@@ -56,13 +57,16 @@ typedef struct {
 	int active;
 	int number;
 	int onScreen;
+	int superMode;
 } ANISPRITE;
 
 // Constants
-#define BULLETCOUNT 5
+#define BULLETCOUNT 3
 #define ENEMYCOUNT 5
 #define ENEMYBULLETCOUNT 5
 #define TREASURECOUNT 5
+#define SUPERBULLETCOUNT 5
+#define SPECIALCOUNT 1
 
 // Variables
 // extern PLAYER player;
@@ -72,10 +76,18 @@ extern ENEMY enemys[ENEMYCOUNT];
 extern int enemysRemaining;
 extern int enemyBulletTimer;
 extern ANISPRITE enemy;
-extern int youLose;
+// extern int youLose;
 extern int lives;
 extern int scoreCol1;
 extern int scoreCol2;
+extern BULLET superBullets[SUPERBULLETCOUNT];
+extern BULLET enemyBullets[ENEMYBULLETCOUNT];
+extern ANISPRITE special;
+extern ANISPRITE specials[SPECIALCOUNT];
+extern int superFired;
+extern int specialCollected;
+extern int specialActive;
+extern int tired;
 
 // Custom Game Colors
 #define NUMCOLORS 6
@@ -108,6 +120,11 @@ void initTreasure();
 void updateTreasure(ANISPRITE *);
 void drawTreasure();
 void fireTreasure(int);
+void initSuperBullets();
+void initSpecial();
+void updateSpecial(ANISPRITE *);
+void drawSpecial();
+void fireSpecial(int);
 
 void setupSounds();
 void playSoundA( const unsigned char* sound, int length, int frequency, int loops);

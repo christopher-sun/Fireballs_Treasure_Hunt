@@ -51,6 +51,7 @@ For the future:
 #include "tt.h"
 #include "knocknock.h"
 #include "cheerup.h"
+#include "startbg2.h"
 
 void initialize();
 
@@ -100,7 +101,9 @@ unsigned short buttons;
 unsigned short oldButtons;
 
 int hOff = 0;
+int vOff = 0;
 int slower = 0;
+int which = 0;
 
 int main() {
 
@@ -325,13 +328,16 @@ void goToStart() {
 	DMANow(3, starttopbgTiles, &CHARBLOCK[1], starttopbgTilesLen/2);
 	DMANow(3, starttopbgMap, &SCREENBLOCK[30], starttopbgMapLen/2);
 
-
+    vOff = 0;
+    REG_BG1VOFF = vOff;
 
     waitForVBlank();
 
     state = START;
 
     seed = 0;
+
+    which = 0;
 
 }
 
@@ -342,14 +348,34 @@ void start() {
 		hOff++;
 	}
 	REG_BG0HOFF = hOff;
+
     waitForVBlank();
 
+    if (BUTTON_PRESSED(BUTTON_LEFT)) {
+        loadPalette(startbgPal);
 
-    if (BUTTON_PRESSED(BUTTON_START)) {
-        srand(seed);
+        DMANow(3, startbgTiles, &CHARBLOCK[0], startbgTilesLen/2);
+        DMANow(3, startbgMap, &SCREENBLOCK[31], startbgMapLen/2);
 
-        goToGame();
-        initGame();
+        which = 0;
+    }
+
+    if (BUTTON_PRESSED(BUTTON_RIGHT)) {
+        loadPalette(startbg2Pal);
+
+        DMANow(3, startbg2Tiles, &CHARBLOCK[0], startbg2TilesLen/2);
+        DMANow(3, startbg2Map, &SCREENBLOCK[31], startbg2MapLen/2);
+
+        which = 1;
+    }
+
+    if (BUTTON_PRESSED(BUTTON_START) && which == 0) {
+            srand(seed);
+
+            goToGame();
+            initGame();
+    } else if (BUTTON_PRESSED(BUTTON_START) && which == 1) {
+        goToInstructions();
     }
 
     if (BUTTON_PRESSED(BUTTON_SELECT)) {
@@ -364,12 +390,24 @@ void goToInstructions() {
 	DMANow(3, instructionsbgTiles, &CHARBLOCK[0], instructionsbgTilesLen/2);
 	DMANow(3, instructionsbgMap, &SCREENBLOCK[31], instructionsbgMapLen/2);
 
+    vOff = 0;
+
     state = INSTRUCTIONS;
 }
 
 void instructions() {
+    waitForVBlank();
+    // slower++;
+    if (BUTTON_HELD(BUTTON_DOWN) && vOff <= 30) {
+        vOff++;
+    }
+    if (BUTTON_HELD(BUTTON_UP) && vOff >= 0) {
+        vOff--;
+    }
 
-    if (BUTTON_PRESSED(BUTTON_SELECT)) {
+    REG_BG1VOFF = vOff;
+
+    if (BUTTON_PRESSED(BUTTON_SELECT) || BUTTON_PRESSED(BUTTON_START)) {
         REG_DISPCTL ^= BG0_ENABLE;
         goToStart();
     }
@@ -407,7 +445,7 @@ void game() {
         pauseSound();
         goToPause();
     }
-    else if (youLose == 1 || lives == 0)
+    else if (/*youLose == 1 || */lives == 0)
         goToLose();
     else if (enemysRemaining == 0 || BUTTON_PRESSED(BUTTON_SELECT))
         goToWin();
