@@ -58,6 +58,8 @@ typedef struct {
 	int number;
 	int onScreen;
 	int superMode;
+	int timeDrop;
+	int dying;
 } ANISPRITE;
 
 // Constants
@@ -88,6 +90,7 @@ extern int superFired;
 extern int specialCollected;
 extern int specialActive;
 extern int tired;
+extern int groundLevel;
 
 // Custom Game Colors
 #define NUMCOLORS 6

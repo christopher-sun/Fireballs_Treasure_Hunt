@@ -480,13 +480,16 @@ goToStart:
 	mov	lr, pc
 	bx	r4
 	mov	r4, #0
-	mov	r2, #67108864
+	mov	r3, #67108864
 	ldr	r5, .L67+48
-	ldr	r3, .L67+52
+	ldr	r2, .L67+52
 	str	r4, [r5]
-	strh	r4, [r2, #22]	@ movhi
+	strh	r4, [r3, #22]	@ movhi
+	strh	r4, [r3, #80]	@ movhi
+	strh	r4, [r3, #18]	@ movhi
+	strh	r4, [r3, #82]	@ movhi
 	mov	lr, pc
-	bx	r3
+	bx	r2
 	ldr	r2, .L67+56
 	ldr	r3, .L67+60
 	str	r4, [r5, #4]
@@ -503,11 +506,11 @@ goToStart:
 	.word	startbgPal
 	.word	loadPalette
 	.word	startbgTiles
-	.word	100726784
+	.word	100724736
 	.word	startbgMap
 	.word	100679680
 	.word	starttopbgTiles
-	.word	100724736
+	.word	100720640
 	.word	starttopbgMap
 	.word	.LANCHOR0
 	.word	waitForVBlank
@@ -523,7 +526,7 @@ initialize:
 	@ frame_needed = 0, uses_anonymous_args = 0
 	stmfd	sp!, {r4, r5, r6, lr}
 	mov	r2, #67108864
-	mov	r4, #7936
+	mov	r4, #40448
 	mov	lr, #128
 	mov	r3, #1
 	mov	r6, #4864
@@ -531,14 +534,14 @@ initialize:
 	ldr	r1, .L71
 	ldrh	r0, [r1]
 	strh	r4, [r2, #10]	@ movhi
-	sub	r4, r4, #252
-	strh	r4, [r2, #8]	@ movhi
 	ldr	r4, .L71+4
+	strh	r4, [r2, #8]	@ movhi
+	ldr	r4, .L71+8
 	ldrh	ip, [r2, #4]
 	strh	lr, [r2, #132]	@ movhi
 	strh	r4, [r2, #130]	@ movhi
-	ldr	lr, .L71+8
-	ldr	r4, .L71+12
+	ldr	lr, .L71+12
+	ldr	r4, .L71+16
 	orr	r0, r0, r3
 	orr	ip, ip, #8
 	strh	r6, [r2]	@ movhi
@@ -546,10 +549,10 @@ initialize:
 	strh	ip, [r2, #4]	@ movhi
 	strh	r0, [r1]	@ movhi
 	strh	r3, [r1, #8]	@ movhi
-	ldr	r2, .L71+16
+	ldr	r2, .L71+20
 	str	r4, [lr, #4092]
-	ldr	r1, .L71+20
-	ldr	r0, .L71+24
+	ldr	r1, .L71+24
+	ldr	r0, .L71+28
 	bl	playSoundA
 	ldmfd	sp!, {r4, r5, r6, lr}
 	b	goToStart
@@ -557,6 +560,7 @@ initialize:
 	.align	2
 .L71:
 	.word	67109376
+	.word	-25596
 	.word	-1266
 	.word	50360320
 	.word	interruptHandler
@@ -609,7 +613,7 @@ goToInstructions:
 	.word	DMANow
 	.word	5744
 	.word	instructionsbgTiles
-	.word	100726784
+	.word	100724736
 	.word	instructionsbgMap
 	.word	.LANCHOR0
 	.word	state
@@ -696,47 +700,55 @@ goToGame:
 	@ Function supports interworking.
 	@ args = 0, pretend = 0, frame = 0
 	@ frame_needed = 0, uses_anonymous_args = 0
-	mov	r2, #67108864
-	ldrh	r3, [r2]
-	eor	r3, r3, #256
 	stmfd	sp!, {r4, lr}
 	ldr	r0, .L103
-	strh	r3, [r2]	@ movhi
 	ldr	r3, .L103+4
+	ldr	r4, .L103+8
 	mov	lr, pc
 	bx	r3
-	ldr	r4, .L103+8
-	mov	r3, #736
+	mov	r3, #32
+	ldr	r2, .L103+12
+	ldr	r1, .L103+16
+	mov	r0, #3
+	mov	lr, pc
+	bx	r4
+	mov	r3, #2048
+	ldr	r2, .L103+20
+	ldr	r1, .L103+24
+	mov	r0, #3
+	mov	lr, pc
+	bx	r4
+	mov	r3, #384
 	mov	r2, #100663296
-	ldr	r1, .L103+12
-	mov	r0, #3
-	mov	lr, pc
-	bx	r4
-	mov	r3, #1024
-	ldr	r2, .L103+16
-	ldr	r1, .L103+20
-	mov	r0, #3
-	mov	lr, pc
-	bx	r4
-	mov	r3, #16384
-	ldr	r2, .L103+24
 	ldr	r1, .L103+28
 	mov	r0, #3
 	mov	lr, pc
 	bx	r4
-	mov	r3, #256
+	mov	r3, #2048
 	ldr	r2, .L103+32
 	ldr	r1, .L103+36
 	mov	r0, #3
 	mov	lr, pc
 	bx	r4
-	mov	r3, #1
+	mov	r3, #16384
 	ldr	r2, .L103+40
 	ldr	r1, .L103+44
-	ldr	r0, .L103+48
+	mov	r0, #3
+	mov	lr, pc
+	bx	r4
+	mov	r3, #256
+	ldr	r2, .L103+48
+	ldr	r1, .L103+52
+	mov	r0, #3
+	mov	lr, pc
+	bx	r4
+	mov	r3, #1
+	ldr	r2, .L103+56
+	ldr	r1, .L103+60
+	ldr	r0, .L103+64
 	bl	playSoundA
 	mov	r2, #2
-	ldr	r3, .L103+52
+	ldr	r3, .L103+68
 	ldmfd	sp!, {r4, lr}
 	str	r2, [r3]
 	bx	lr
@@ -746,8 +758,12 @@ goToGame:
 	.word	gamebgPal
 	.word	loadPalette
 	.word	DMANow
+	.word	100679680
+	.word	gametopbgTiles
+	.word	100720640
+	.word	gametopbgMap
 	.word	gamebgTiles
-	.word	100726784
+	.word	100724736
 	.word	gamebgMap
 	.word	100728832
 	.word	spritesTiles
@@ -901,7 +917,7 @@ start:
 	.word	loadPalette
 	.word	DMANow
 	.word	startbg2Tiles
-	.word	100726784
+	.word	100724736
 	.word	startbg2Map
 	.word	startbgPal
 	.word	startbgTiles
@@ -943,11 +959,15 @@ goToPause:
 	mov	r0, #3
 	mov	lr, pc
 	bx	r4
-	ldr	r2, .L137+32
 	mov	r3, #1
+	ldr	r2, .L137+32
 	ldr	r1, .L137+36
 	ldr	r0, .L137+40
 	bl	playSoundB
+	mov	r2, #67108864
+	ldrh	r3, [r2]
+	eor	r3, r3, #256
+	strh	r3, [r2]	@ movhi
 	ldr	r3, .L137+44
 	mov	lr, pc
 	bx	r3
@@ -965,7 +985,7 @@ goToPause:
 	.word	pausebgPal
 	.word	loadPalette
 	.word	pausebgTiles
-	.word	100726784
+	.word	100724736
 	.word	pausebgMap
 	.word	11025
 	.word	2182590
@@ -1016,18 +1036,22 @@ pause:
 	ldmfd	sp!, {r4, lr}
 	b	goToStart
 .L151:
+	mov	r2, #67108864
+	ldrh	r3, [r2]
+	eor	r3, r3, #256
+	strh	r3, [r2]	@ movhi
 	ldr	r0, .L153+24
 	ldr	r3, .L153+28
 	mov	lr, pc
 	bx	r3
 	ldr	r4, .L153+32
-	mov	r3, #736
+	mov	r3, #384
 	mov	r2, #100663296
 	ldr	r1, .L153+36
 	mov	r0, #3
 	mov	lr, pc
 	bx	r4
-	mov	r3, #1024
+	mov	r3, #2048
 	ldr	r2, .L153+40
 	ldr	r1, .L153+44
 	mov	r0, #3
@@ -1080,7 +1104,7 @@ pause:
 	.word	loadPalette
 	.word	DMANow
 	.word	gamebgTiles
-	.word	100726784
+	.word	100724736
 	.word	gamebgMap
 	.word	100728832
 	.word	spritesTiles
@@ -1127,9 +1151,13 @@ goToWin:
 	bx	r4
 	mov	lr, pc
 	bx	r5
-	ldr	r2, .L157+32
+	mov	r2, #67108864
+	ldrh	r3, [r2]
+	eor	r3, r3, #256
+	strh	r3, [r2]	@ movhi
+	ldr	r1, .L157+32
+	ldr	r2, .L157+36
 	mov	r3, #1
-	ldr	r1, .L157+36
 	ldr	r0, .L157+40
 	bl	playSoundA
 	ldr	r3, .L157+44
@@ -1149,10 +1177,10 @@ goToWin:
 	.word	winbgPal
 	.word	loadPalette
 	.word	winbgTiles
-	.word	100726784
+	.word	100724736
 	.word	winbgMap
-	.word	11025
 	.word	2249917
+	.word	11025
 	.word	cheerup
 	.word	waitForVBlank
 	.word	state
@@ -1193,9 +1221,13 @@ goToLose:
 	bx	r4
 	mov	lr, pc
 	bx	r5
-	ldr	r2, .L161+32
+	mov	r2, #67108864
+	ldrh	r3, [r2]
+	eor	r3, r3, #256
+	strh	r3, [r2]	@ movhi
+	ldr	r1, .L161+32
+	ldr	r2, .L161+36
 	mov	r3, #1
-	ldr	r1, .L161+36
 	ldr	r0, .L161+40
 	bl	playSoundA
 	ldr	r3, .L161+44
@@ -1215,10 +1247,10 @@ goToLose:
 	.word	losebgPal
 	.word	loadPalette
 	.word	losebgTiles
-	.word	100726784
+	.word	100724736
 	.word	losebgMap
-	.word	11025
 	.word	2311783
+	.word	11025
 	.word	tt
 	.word	waitForVBlank
 	.word	state
@@ -1240,26 +1272,38 @@ game:
 	ldr	r3, .L188+8
 	mov	lr, pc
 	bx	r3
+	mov	ip, #67108864
+	mov	r0, #0
 	ldr	r3, .L188+12
+	ldr	r3, [r3]
+	rsb	r3, r3, #80
+	mov	r2, r3, asl #16
+	ldr	r1, .L188+16
+	mov	r2, r2, lsr #16
+	str	r3, [r1]
+	strh	r2, [ip, #18]	@ movhi
+	ldr	r3, .L188+20
+	strh	r0, [ip, #16]	@ movhi
 	ldrh	r3, [r3]
 	tst	r3, #8
+	str	r0, [r1, #12]
 	beq	.L164
-	ldr	r2, .L188+16
+	ldr	r2, .L188+24
 	ldrh	r2, [r2]
 	ands	r2, r2, #8
 	beq	.L186
 .L164:
-	ldr	r2, .L188+20
+	ldr	r2, .L188+28
 	ldr	r2, [r2]
 	cmp	r2, #0
 	beq	.L187
-	ldr	r2, .L188+24
+	ldr	r2, .L188+32
 	ldr	r2, [r2]
 	cmp	r2, #0
 	beq	.L168
 	tst	r3, #4
 	beq	.L163
-	ldr	r3, .L188+16
+	ldr	r3, .L188+24
 	ldrh	r3, [r3]
 	tst	r3, #4
 	bne	.L163
@@ -1267,17 +1311,17 @@ game:
 	ldmfd	sp!, {r4, lr}
 	b	goToWin
 .L186:
-	ldr	r3, .L188+28
-	ldr	r1, [r3, #12]
-	cmp	r1, #0
-	strne	r2, [r3, #12]
-	ldrne	r1, .L188+32
 	ldr	r3, .L188+36
+	ldr	r1, [r3, #12]
+	cmp	r1, r0
+	strne	r2, [r3, #12]
+	ldrne	r1, .L188+40
+	ldr	r3, .L188+44
 	strneh	r2, [r1, #2]	@ movhi
 	ldr	r2, [r3, #12]
 	cmp	r2, #0
 	movne	r2, #0
-	ldrne	r1, .L188+32
+	ldrne	r1, .L188+40
 	strne	r2, [r3, #12]
 	ldmfd	sp!, {r4, lr}
 	strneh	r2, [r1, #6]	@ movhi
@@ -1294,6 +1338,8 @@ game:
 	.word	updateGame
 	.word	drawGame
 	.word	waitForVBlank
+	.word	player
+	.word	.LANCHOR0
 	.word	oldButtons
 	.word	buttons
 	.word	lives

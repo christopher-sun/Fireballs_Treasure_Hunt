@@ -30,14 +30,23 @@ int superFired;
 int specialCollected;
 int specialActive;
 
+int groundLevel;
+
 int tired;
 int alreadyDrop = 0; // if drop already on the screen
 
 int vblankCount = 0;
 const int accel = -1;
 
+//ALPHA BLEND
+int blend;// blending on or off
+int ghost_blend = 16;
+int counter = 0;
+int changeBlending = 5;
+
 
 OBJ_ATTR shadowOAM[128]; //@ 45
+// 46 special
 //41 - 45 treasures i guess
 //38-40 for score
 //32-36 for enemybullet
@@ -69,6 +78,10 @@ void initGame() {
 	initSpecial();
 	hideSprites();
 
+
+	//set up blending registers
+    REG_BLDMOD = BG1_B | OBJ_B | BACKDROP_B | NORMAL_TRANS | BG0_B;
+
 	enemysRemaining = ENEMYCOUNT;
 	enemyBulletTimer = 0;
 	// youLose = 0;
@@ -77,6 +90,8 @@ void initGame() {
 	scoreCol2 = 5;
 	superFired = 0;
 	specialCollected = 0;
+
+	blend = 0;
 }
 
 // Updates the game each frame
@@ -91,6 +106,12 @@ void updateGame() {
 			// enemyBulletTimer = 0;
 		}
 		enemyBulletTimer = 0;
+	}
+
+	if(++counter % changeBlending == 0) {
+    	ghost_blend--;
+	    if (ghost_blend < 0) ghost_blend = 16;
+	    REG_COLEV = WEIGHTOFA(ghost_blend) | WEIGHTOFB(16-ghost_blend);
 	}
 
 	DMANow(3, shadowOAM, OAM, 128*4);
@@ -133,18 +154,35 @@ void drawGame() {
 void drawScore() {
 	shadowOAM[38].attr0 = 0 | ATTR0_4BPP | ATTR0_SQUARE;
 	shadowOAM[38].attr1 = 73 | ATTR1_TINY;
-	shadowOAM[38].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(7,scoreCol1);
+	shadowOAM[38].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(13,scoreCol1);
 
 	shadowOAM[39].attr0 = 0 | ATTR0_4BPP | ATTR0_SQUARE;
 	shadowOAM[39].attr1 = 78 | ATTR1_TINY;
-	shadowOAM[39].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(7,scoreCol2);
+	shadowOAM[39].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(13,scoreCol2);
 
 }
 
 void drawLives() {
 	shadowOAM[40].attr0 = 0 | ATTR0_4BPP | ATTR0_SQUARE;
 	shadowOAM[40].attr1 = (SCREENWIDTH - 8) | ATTR1_TINY;
-	shadowOAM[40].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(7,lives);
+	shadowOAM[40].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(12,lives);
+
+	shadowOAM[47].attr0 = 10 | ATTR0_4BPP | ATTR0_SQUARE;
+	shadowOAM[47].attr1 = (SCREENWIDTH - 8) | ATTR1_TINY;
+	shadowOAM[47].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(12,lives);
+
+	shadowOAM[48].attr0 = 20 | ATTR0_4BPP | ATTR0_SQUARE;
+	shadowOAM[48].attr1 = (SCREENWIDTH - 8) | ATTR1_TINY;
+	shadowOAM[48].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(12,lives);
+
+	if (lives == 2) {
+		shadowOAM[48].attr0 = ATTR0_HIDE;
+	}
+	if (lives == 1) {
+		shadowOAM[48].attr0 = ATTR0_HIDE;
+		shadowOAM[47].attr0 = ATTR0_HIDE;
+	}
+
 }
 
 // Initialize the player
@@ -490,9 +528,13 @@ void drawBullet() {
 
 	for (int i = 0; i < BULLETCOUNT; i++) {
 		if (bullets[i].active) {
-			shadowOAM[i + 27].attr0 = bullets[i].row | ATTR0_4BPP | ATTR0_SQUARE;
-			shadowOAM[i + 27].attr1 = bullets[i].col | ATTR1_TINY;
-			shadowOAM[i + 27].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(1,8);
+			shadowOAM[i + 27].attr0 = (bullets[i].row & ROWMASK) | ATTR0_4BPP | ATTR0_SQUARE;
+			shadowOAM[i + 27].attr1 = (bullets[i].col & COLMASK) | ATTR1_TINY;
+			if (player.superMode) {
+				shadowOAM[i + 27].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(0,10);
+			} else {
+				shadowOAM[i + 27].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(0,9);
+			}
 		} else {
 			shadowOAM[i + 27].attr0 = ATTR0_HIDE;
 		}
@@ -504,8 +546,8 @@ void drawEnemyBullet() { //32-37
 	for (int i = 0; i< ENEMYBULLETCOUNT; i++) {
 		if (enemyBullets[i].active) {
 			shadowOAM[i + 32].attr0 = enemyBullets[i].row | ATTR0_4BPP | ATTR0_SQUARE;
-			shadowOAM[i + 32].attr1 = enemyBullets[i].col | ATTR1_TINY;
-			shadowOAM[i + 32].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(1,9);
+			shadowOAM[i + 32].attr1 = enemyBullets[i].col | ATTR1_SMALL;
+			shadowOAM[i + 32].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(0,13);
 		} else {
 			shadowOAM[i + 32].attr0 = ATTR0_HIDE;
 		}
@@ -595,13 +637,7 @@ void drawEnemy() {
 		if (enemys[i].active) {
 			shadowOAM[i + 1].attr0 = enemys[i].row | ATTR0_4BPP | ATTR0_SQUARE;
 			shadowOAM[i + 1].attr1 = enemys[i].col | ATTR1_TINY;
-			if (i % 5 == 0) {
-				shadowOAM[i + 1].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(2 + enemys[i].curFrame,10);
-			} else if (i % 5 == 1) {
-				shadowOAM[i + 1].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(2 + enemys[i].curFrame,9);
-			} else {
-				shadowOAM[i + 1].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(2 + enemys[i].curFrame,8);
-			}
+			shadowOAM[i + 1].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(0,11);
 		} else {
 			shadowOAM[i + 1].attr0 = ATTR0_HIDE;
 		}
@@ -626,6 +662,8 @@ void initTreasure() {
 		treasures[i].cDirection = 0;
 		treasures[i].active = 0;
 		treasures[i].number = i;
+		treasures[i].timeDrop = 0;
+		treasures[i].dying = 0;
 	}
 }
 
@@ -638,6 +676,14 @@ void updateTreasure(ANISPRITE* a) {
 		}
 		if (a->row >= player.groundRow) {
 			a->row = player.groundRow + a->height;
+		}
+
+		a->timeDrop++;
+		if (a->timeDrop == 300) {
+			a->dying = 1;
+		}
+		if (a->timeDrop == 600) {
+			a->active = 0;
 		}
 
 		if (collision(player.row, player.col, player.height, player.width,
@@ -658,6 +704,7 @@ void fireTreasure(int i) {
 			treasures[j].col = enemyBullets[i].col;
 			treasures[j].active = 1;
 			treasures[j].onScreen = 0;
+			treasures[j].dying = 0;
 			drawTreasure();
 			break;
 		}
@@ -667,7 +714,11 @@ void fireTreasure(int i) {
 void drawTreasure() {
 	for (int i = 0; i < TREASURECOUNT; i++) {
 		if (treasures[i].active) {
-			shadowOAM[i + 41].attr0 = treasures[i].row | ATTR0_4BPP | ATTR0_SQUARE;
+			if (treasures[i].dying) {
+				shadowOAM[i + 41].attr0 = treasures[i].row | ATTR0_4BPP | ATTR0_SQUARE | ATTR0_BLEND;
+			} else {
+				shadowOAM[i + 41].attr0 = treasures[i].row | ATTR0_4BPP | ATTR0_SQUARE;
+			}
 			shadowOAM[i + 41].attr1 = treasures[i].col | ATTR1_TINY;
 			shadowOAM[i + 41].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(0,8);
 			// treasures[i].onScreen = 1;
@@ -695,6 +746,8 @@ void initSpecial() {
 		specials[i].bulletTimer = 0;
 		specials[i].cDirection = 0;
 		specials[i].active = 0;
+		specials[i].timeDrop = 0;
+		specials[i].dying = 0;
 	}
 	specialActive = 0;
 }
@@ -708,6 +761,14 @@ void updateSpecial(ANISPRITE* a) {
 		}
 		if (a->row >= player.groundRow) {
 			a->row = player.groundRow + a->height;
+		}
+
+		a->timeDrop++;
+		if (a->timeDrop == 300) {
+			a->dying = 1;
+		}
+		if (a->timeDrop == 600) {
+			a->active = 0;
 		}
 
 		if (collision(player.row, player.col, player.height, player.width,
@@ -730,6 +791,7 @@ void fireSpecial(int i) {
 			specials[j].col = enemyBullets[i].col;
 			specials[j].active = 1;
 			specialActive = 1;
+			specials[j].dying = 0;
 			drawSpecial();
 			break;
 		}
@@ -739,9 +801,13 @@ void fireSpecial(int i) {
 void drawSpecial() {
 	for (int i = 0; i < SPECIALCOUNT; i++) {
 		if (specials[i].active) {
-			shadowOAM[i + 46].attr0 = specials[i].row | ATTR0_4BPP | ATTR0_SQUARE;
+			if (specials[i].dying) {
+				shadowOAM[i + 46].attr0 = specials[i].row | ATTR0_4BPP | ATTR0_SQUARE | ATTR0_BLEND;
+			} else {
+				shadowOAM[i + 46].attr0 = specials[i].row | ATTR0_4BPP | ATTR0_SQUARE;
+			}
 			shadowOAM[i + 46].attr1 = specials[i].col | ATTR1_TINY;
-			shadowOAM[i + 46].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(2,9);
+			shadowOAM[i + 46].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(0,15);
 			// treasures[i].onScreen = 1;
 		} else {
 			shadowOAM[i + 46].attr0 = ATTR0_HIDE;

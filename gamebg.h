@@ -3,13 +3,13 @@
 
 //======================================================================
 //
-//	gamebg, 256x256@4, 
+//	gamebg, 256x512@4, 
 //	+ palette 256 entries, not compressed
 //	+ 24 tiles (t|f|p reduced) not compressed
-//	+ regular map (in SBBs), not compressed, 32x32 
-//	Total size: 512 + 768 + 2048 = 3328
+//	+ regular map (in SBBs), not compressed, 32x64 
+//	Total size: 512 + 768 + 4096 = 5376
 //
-//	Time-stamp: 2017-11-28, 22:14:45
+//	Time-stamp: 2017-11-29, 14:16:18
 //	Exported by Cearn's GBA Image Transmogrifier, v0.8.3
 //	( http://www.coranac.com/projects/#grit )
 //
@@ -21,8 +21,8 @@
 #define gamebgTilesLen 768
 extern const unsigned short gamebgTiles[384];
 
-#define gamebgMapLen 2048
-extern const unsigned short gamebgMap[1024];
+#define gamebgMapLen 4096
+extern const unsigned short gamebgMap[2048];
 
 #define gamebgPalLen 512
 extern const unsigned short gamebgPal[256];

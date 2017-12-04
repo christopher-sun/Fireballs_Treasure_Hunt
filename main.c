@@ -1,4 +1,36 @@
 /*****
+Milestone 3:
+Christopher Sun
+Fireball's Treasure Hunt
+28 November 2017
+CS 2261
+
+On top of what works in Milestone 2, what now works is the BGM and shooting SFX, the treasure now falls on the correct level, the collision works correctly now, the CHEAT, and the ground increments for each missed vertical projectile.
+
+My states are:
+SPLASH -> INSTRUCTIONS = RIGHT to "INSTRUCTIONS" + START
+    INSTRUCTIONS -> SPLASH = ENTER
+SPLASH -> GAME = LEFT TO "START" + START
+GAME -> PAUSE = START
+    PAUSE -> GAME = START
+PAUSE -> SPLASH (RESTART) = SELECT
+GAME -> WIN = Kill 5 horizontal enemies
+    or GAME -> WIN = SElECT
+GAME -> LOSE = Hit by vertical or horizontal enemies 3 times OR player hits the ceiling
+WIN/LOSE -> SPLASH (RESTART) = START
+Raise floor = B or vertical projectile hits the floor
+
+Minor Bugs: Sometimes random sprites flash somewhere on the screen for a split second randomly. I can't find what triggers it and it only happens once a game (every few games, not every game).
+
+For the future:
+-Finalize the sprites and backgrounds -- make everything pretty
+-Finish adding SFX
+-Have horizontal projectiles follow the groundRow of player
+-Possibly make vertical projectiles spawn in a range around player so it's easier
+-Try alpha blending the treasure to disappear after a certain time (extra credit) or when the max amount is on the screen already.
+*****/
+
+/*****
 Milestone 2:
 Christopher Sun
 Fireball's Treasure Hunt
@@ -52,6 +84,7 @@ For the future:
 #include "knocknock.h"
 #include "cheerup.h"
 #include "startbg2.h"
+#include "gametopbg.h"
 
 void initialize();
 
@@ -145,8 +178,8 @@ int main() {
 void initialize() {
 	REG_DISPCTL = MODE0 | BG0_ENABLE | BG1_ENABLE | SPRITE_ENABLE;
 
-	REG_BG1CNT = BG_SIZE_SMALL | BG_CHARBLOCK(0) | BG_SCREENBLOCK(31);
-	REG_BG0CNT = BG_SIZE_SMALL | BG_CHARBLOCK(1) | BG_SCREENBLOCK(30);
+	REG_BG1CNT = BG_SIZE_TALL | BG_CHARBLOCK(0) | BG_SCREENBLOCK(30);
+	REG_BG0CNT = BG_SIZE_TALL | BG_CHARBLOCK(1) | BG_SCREENBLOCK(28);
 
     setupSounds();
     setupInterrupts();
@@ -324,12 +357,16 @@ void goToStart() {
 	loadPalette(startbgPal);
 
 	DMANow(3, startbgTiles, &CHARBLOCK[0], startbgTilesLen/2);
-	DMANow(3, startbgMap, &SCREENBLOCK[31], startbgMapLen/2);
+	DMANow(3, startbgMap, &SCREENBLOCK[30], startbgMapLen/2);
 	DMANow(3, starttopbgTiles, &CHARBLOCK[1], starttopbgTilesLen/2);
-	DMANow(3, starttopbgMap, &SCREENBLOCK[30], starttopbgMapLen/2);
+	DMANow(3, starttopbgMap, &SCREENBLOCK[28], starttopbgMapLen/2);
 
     vOff = 0;
     REG_BG1VOFF = vOff;
+    REG_BG0VOFF = vOff;
+
+    REG_BLDMOD = 0;
+    REG_COLEV = 0;
 
     waitForVBlank();
 
@@ -355,7 +392,7 @@ void start() {
         loadPalette(startbgPal);
 
         DMANow(3, startbgTiles, &CHARBLOCK[0], startbgTilesLen/2);
-        DMANow(3, startbgMap, &SCREENBLOCK[31], startbgMapLen/2);
+        DMANow(3, startbgMap, &SCREENBLOCK[30], startbgMapLen/2);
 
         which = 0;
     }
@@ -364,7 +401,7 @@ void start() {
         loadPalette(startbg2Pal);
 
         DMANow(3, startbg2Tiles, &CHARBLOCK[0], startbg2TilesLen/2);
-        DMANow(3, startbg2Map, &SCREENBLOCK[31], startbg2MapLen/2);
+        DMANow(3, startbg2Map, &SCREENBLOCK[30], startbg2MapLen/2);
 
         which = 1;
     }
@@ -388,7 +425,7 @@ void goToInstructions() {
     loadPalette(instructionsbgPal);
 
 	DMANow(3, instructionsbgTiles, &CHARBLOCK[0], instructionsbgTilesLen/2);
-	DMANow(3, instructionsbgMap, &SCREENBLOCK[31], instructionsbgMapLen/2);
+	DMANow(3, instructionsbgMap, &SCREENBLOCK[30], instructionsbgMapLen/2);
 
     vOff = 0;
 
@@ -414,11 +451,14 @@ void instructions() {
 }
 
 void goToGame() {
-	REG_DISPCTL ^= BG0_ENABLE;
+	// REG_DISPCTL ^= BG0_ENABLE;
 	loadPalette(gamebgPal);
 
+    DMANow(3, gametopbgTiles, &CHARBLOCK[1], gametopbgTilesLen/2);
+    DMANow(3, gametopbgMap, &SCREENBLOCK[28], gametopbgMapLen/2);
 	DMANow(3, gamebgTiles, &CHARBLOCK[0], gamebgTilesLen/2);
-	DMANow(3, gamebgMap, &SCREENBLOCK[31], gamebgMapLen/2);
+	DMANow(3, gamebgMap, &SCREENBLOCK[30], gamebgMapLen/2);
+
 
 	DMANow(3, spritesTiles, &CHARBLOCK[4], spritesTilesLen/2);
 	DMANow(3, spritesPal, SPRITEPALETTE, spritesPalLen/2);
@@ -440,8 +480,14 @@ void game() {
 
     waitForVBlank();
     // flipPage();
+    hOff = 0;
+    vOff = SCREENHEIGHT - 80 - player.groundRow;
+    REG_BG0VOFF = vOff;
+    REG_BG0HOFF = hOff;
+
 
     if (BUTTON_PRESSED(BUTTON_START)) {
+        // REG_DISPCTL ^= BG0_ENABLE;
         pauseSound();
         goToPause();
     }
@@ -460,9 +506,11 @@ void goToPause() {
 	loadPalette(pausebgPal);
 
 	DMANow(3, pausebgTiles, &CHARBLOCK[0], pausebgTilesLen/2);
-	DMANow(3, pausebgMap, &SCREENBLOCK[31], pausebgMapLen/2);
+	DMANow(3, pausebgMap, &SCREENBLOCK[30], pausebgMapLen/2);
 
     playSoundB(pauseaudio,PAUSEAUDIOLEN,PAUSEAUDIOFREQ, 1);
+
+    REG_DISPCTL ^= BG0_ENABLE;
 
     waitForVBlank();
 
@@ -475,11 +523,11 @@ void pause() {
 
     if (BUTTON_PRESSED(BUTTON_START)) {
         // goToGame();
-		// REG_DISPCTL ^= BG0_ENABLE;
+		REG_DISPCTL ^= BG0_ENABLE;
 		loadPalette(gamebgPal);
 
 		DMANow(3, gamebgTiles, &CHARBLOCK[0], gamebgTilesLen/2);
-		DMANow(3, gamebgMap, &SCREENBLOCK[31], gamebgMapLen/2);
+		DMANow(3, gamebgMap, &SCREENBLOCK[30], gamebgMapLen/2);
 
 		DMANow(3, spritesTiles, &CHARBLOCK[4], spritesTilesLen/2);
 		DMANow(3, spritesPal, SPRITEPALETTE, spritesPalLen/2);
@@ -501,8 +549,10 @@ void goToWin() {
 		loadPalette(winbgPal);
 
 		DMANow(3, winbgTiles, &CHARBLOCK[0], winbgTilesLen/2);
-		DMANow(3, winbgMap, &SCREENBLOCK[31], winbgMapLen/2);
+		DMANow(3, winbgMap, &SCREENBLOCK[30], winbgMapLen/2);
 		hideSprites();
+
+        REG_DISPCTL ^= BG0_ENABLE;
 
     playSoundA(cheerup,CHEERUPLEN,CHEERUPFREQ, 1);
 
@@ -532,9 +582,11 @@ void goToLose() {
 		loadPalette(losebgPal);
 
 		DMANow(3, losebgTiles, &CHARBLOCK[0], losebgTilesLen/2);
-		DMANow(3, losebgMap, &SCREENBLOCK[31], losebgMapLen/2);
+		DMANow(3, losebgMap, &SCREENBLOCK[30], losebgMapLen/2);
 
 		hideSprites();
+
+        REG_DISPCTL ^= BG0_ENABLE;
 
         playSoundA(tt,TTLEN,TTFREQ, 1);
     waitForVBlank();

@@ -126,6 +126,10 @@ typedef struct {
 #define OAM ((OBJ_ATTR*)(0x7000000))
 extern OBJ_ATTR shadowOAM[];
 
+#define ROWMASK 0xFF
+#define COLMASK 0x1FF
+
+
 // Attribute 0
 #define ATTR0_REGULAR      (0<<8)  // Normal Rendering
 #define ATTR0_AFFINE       (1<<8)  // Affine Rendering
@@ -276,6 +280,33 @@ void DMANow(int channel, volatile const void *src, volatile void *dst, unsigned 
 #define INT_TM1 1<<4
 #define INT_BUTTON 1 << 12
 
+//  *** BLENDING=========================================================
+
+#define REG_BLDMOD *(unsigned short*)0x4000050 //blend modes
+#define REG_COLEV *(unsigned short*)0x4000052 //weights
+
+//weights for each object
+#define WEIGHTOFA(weight) (weight)
+#define WEIGHTOFB(weight) ((weight) << 8)
+
+//object a
+#define BG0_A (1 << 0)
+#define BG1_A (1 << 1)
+#define BG2_A (1 << 2)
+#define BG3_A (1 << 3)
+#define OBJ_A (1 << 4)
+#define BACKDROP_A (1 << 5)
+
+//turn on bg blending
+#define NORMAL_TRANS (1 << 6)
+
+//object b
+#define BG0_B (1 << 8)
+#define BG1_B (1 << 9)
+#define BG2_B (1 << 10)
+#define BG3_B (1 << 11)
+#define OBJ_B (1 << 12)
+#define BACKDROP_B (1 << 13)
 
 // *** Sound =========================================================
 
