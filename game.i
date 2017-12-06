@@ -758,6 +758,8 @@ typedef struct {
  int aniCounter;
  int curFrame;
  int numFrames;
+ int dying;
+ int actuallyDie;
 } ENEMY;
 
 typedef struct {
@@ -782,7 +784,7 @@ typedef struct {
  int timeDrop;
  int dying;
 } ANISPRITE;
-# 75 "game.h"
+# 77 "game.h"
 extern ANISPRITE player;
 extern BULLET bullets[3];
 extern ENEMY enemys[5];
@@ -802,6 +804,7 @@ extern int specialCollected;
 extern int specialActive;
 extern int tired;
 extern int groundLevel;
+extern int totalScore;
 
 
 
@@ -849,6 +852,9 @@ void stopSound();
 
 void setupInterrupts();
 void interruptHandler();
+
+void drawPowerReady();
+void drawBulletCounter();
 # 4 "game.c" 2
 # 1 "sprites.h" 1
 # 21 "sprites.h"
@@ -883,6 +889,7 @@ ANISPRITE specials[1];
 
 int scoreCol1;
 int scoreCol2;
+int totalScore;
 
 int superFired;
 int specialCollected;
@@ -904,7 +911,7 @@ int changeBlending = 5;
 
 
 OBJ_ATTR shadowOAM[128];
-# 57 "game.c"
+# 62 "game.c"
 typedef struct{
     const unsigned char* data;
     int length;
@@ -931,16 +938,17 @@ void initGame() {
 
 
 
-    *(unsigned short*)0x4000050 = (1 << 9) | (1 << 12) | (1 << 13) | (1 << 6) | (1 << 8);
+    *(unsigned short*)0x4000050 = (1 << 9) | (1 << 12) | (1 << 13) | (1 << 6) | (1 << 8) | (1 << 10);
 
  enemysRemaining = 5;
  enemyBulletTimer = 0;
 
  lives = 3;
- scoreCol1 = 0;
- scoreCol2 = 5;
- superFired = 0;
+
+
+ superFired = 5;
  specialCollected = 0;
+ totalScore = 0;
 
  blend = 0;
 }
@@ -997,33 +1005,60 @@ void drawGame() {
  drawLives();
  drawTreasure();
  drawSpecial();
+ drawPowerReady();
+ drawBulletCounter();
 
  waitForVBlank();
  vblankCount++;
 }
 
 void drawScore() {
- shadowOAM[38].attr0 = 0 | (0<<13) | (0<<14);
- shadowOAM[38].attr1 = 73 | (0<<14);
- shadowOAM[38].attr2 = ((0)<<12) | ((13)*32+(scoreCol1));
+# 172 "game.c"
+ shadowOAM[49].attr0 = (160 - 10) | (0<<13) | (0<<14);
+ shadowOAM[49].attr1 = (240 - 25) | (0<<14);
+ shadowOAM[49].attr2 = ((0)<<10) | ((0)<<12) | ((13)*32+(totalScore / 100));
 
- shadowOAM[39].attr0 = 0 | (0<<13) | (0<<14);
- shadowOAM[39].attr1 = 78 | (0<<14);
- shadowOAM[39].attr2 = ((0)<<12) | ((13)*32+(scoreCol2));
+ shadowOAM[50].attr0 = (160 - 10) | (0<<13) | (0<<14);
+ shadowOAM[50].attr1 = (240 - 17) | (0<<14);
+ shadowOAM[50].attr2 = ((0)<<10) | ((0)<<12) | ((13)*32+((totalScore / 10) % 10));
+
+ shadowOAM[51].attr0 = (160 - 10) | (0<<13) | (0<<14);
+ shadowOAM[51].attr1 = (240 - 9) | (0<<14);
+ shadowOAM[51].attr2 = ((0)<<10) | ((0)<<12) | ((13)*32+(totalScore % 10));
+
+
+ shadowOAM[55].attr0 = (160 - 10) | (0<<13) | (1<<14);
+ shadowOAM[55].attr1 = 1 | (1<<14);
+ shadowOAM[55].attr2 = ((0)<<12) | ((10)*32+(8));
 
 }
 
+void drawPowerReady() {
+ if (specialCollected & !player.superMode) {
+  shadowOAM[52].attr0 = (player.groundRow + 16) | (0<<13) | (1<<14) | (1<<10);
+  shadowOAM[52].attr1 = (240 / 2 - 32) | (1<<14);
+  shadowOAM[52].attr2 = ((0)<<12) | ((5)*32+(8)) | ((0)<<10);
+
+  shadowOAM[53].attr0 = (player.groundRow + 16) | (0<<13) | (1<<14) | (1<<10);
+  shadowOAM[53].attr1 = (240 / 2) | (1<<14);
+  shadowOAM[53].attr2 = ((0)<<12) | ((5)*32+(12));
+ } else {
+  shadowOAM[52].attr0 = (2<<8);
+  shadowOAM[53].attr0 = (2<<8);
+ }
+}
+
 void drawLives() {
- shadowOAM[40].attr0 = 0 | (0<<13) | (0<<14);
- shadowOAM[40].attr1 = (240 - 8) | (0<<14);
+ shadowOAM[40].attr0 = (160 - 10) | (0<<13) | (0<<14);
+ shadowOAM[40].attr1 = 24 | (0<<14);
  shadowOAM[40].attr2 = ((0)<<12) | ((12)*32+(lives));
 
- shadowOAM[47].attr0 = 10 | (0<<13) | (0<<14);
- shadowOAM[47].attr1 = (240 - 8) | (0<<14);
+ shadowOAM[47].attr0 = (160 - 10) | (0<<13) | (0<<14);
+ shadowOAM[47].attr1 = 32 | (0<<14);
  shadowOAM[47].attr2 = ((0)<<12) | ((12)*32+(lives));
 
- shadowOAM[48].attr0 = 20 | (0<<13) | (0<<14);
- shadowOAM[48].attr1 = (240 - 8) | (0<<14);
+ shadowOAM[48].attr0 = (160 - 10) | (0<<13) | (0<<14);
+ shadowOAM[48].attr1 = 40 | (0<<14);
  shadowOAM[48].attr2 = ((0)<<12) | ((12)*32+(lives));
 
  if (lives == 2) {
@@ -1036,16 +1071,56 @@ void drawLives() {
 
 }
 
+void drawBulletCounter() {
+ if (player.superMode) {
+  shadowOAM[56].attr0 = (160 - 10) | (0<<13) | (0<<14);
+  shadowOAM[56].attr1 = (240 / 2 - 20) | (0<<14);
+  shadowOAM[56].attr2 = ((0)<<12) | ((2)*32+(10));
+
+  shadowOAM[57].attr0 = (160 - 10) | (0<<13) | (0<<14);
+  shadowOAM[57].attr1 = (240 / 2 - 12) | (0<<14);
+  shadowOAM[57].attr2 = ((0)<<12) | ((2)*32+(10));
+
+  shadowOAM[58].attr0 = (160 - 10) | (0<<13) | (0<<14);
+  shadowOAM[58].attr1 = (240 / 2 - 4) | (0<<14);
+  shadowOAM[58].attr2 = ((0)<<12) | ((2)*32+(10));
+
+  shadowOAM[59].attr0 = (160 - 10) | (0<<13) | (0<<14);
+  shadowOAM[59].attr1 = (240 / 2 + 4) | (0<<14);
+  shadowOAM[59].attr2 = ((0)<<12) | ((2)*32+(10));
+
+  shadowOAM[60].attr0 = (160 - 10) | (0<<13) | (0<<14);
+  shadowOAM[60].attr1 = (240 / 2 + 12) | (0<<14);
+  shadowOAM[60].attr2 = ((0)<<12) | ((2)*32+(10));
+ }
+
+ if (superFired >= 1) {
+  shadowOAM[60].attr0 = (2<<8);
+ }
+ if (superFired >= 2) {
+  shadowOAM[59].attr0 = (2<<8);
+ }
+ if (superFired >= 3) {
+  shadowOAM[58].attr0 = (2<<8);
+ }
+ if (superFired >= 4) {
+  shadowOAM[57].attr0 = (2<<8);
+ }
+ if (superFired >= 5) {
+  shadowOAM[56].attr0 = (2<<8);
+ }
+}
+
 
 void initPlayer() {
- player.groundRow = 160 - 20;
- player.width = 16;
+ player.groundRow = 160 - 30;
+ player.width = 11;
     player.height = 16;
     player.rdel = 20;
     player.cdel = 2;
 
  player.col = 240/2-player.height/2;
- player.row = 160 - 20;
+ player.row = 160 - 30;
  player.superMode = 0;
  player.curFrame = 0;
  player.numFrames = 2;
@@ -1061,7 +1136,7 @@ void updatePlayer() {
 
 
  player.aniCounter++;
- if (player.aniCounter % 40 == 0) {
+ if (player.aniCounter % 30 == 0) {
   player.curFrame++;
  }
 
@@ -1077,12 +1152,12 @@ void updatePlayer() {
 
  if ((!(~(oldButtons)&((1<<0))) && (~buttons & ((1<<0))))) {
   fireBullet();
-# 239 "game.c"
+# 320 "game.c"
  }
  if((~((*(volatile unsigned short *)0x04000130)) & ((1<<5))) && player.col > 0) {
   player.col-= player.cdel;
  }
- if((~((*(volatile unsigned short *)0x04000130)) & ((1<<4))) && player.col + player.width < 240) {
+ if((~((*(volatile unsigned short *)0x04000130)) & ((1<<4))) && player.col + player.width + 1 < 240) {
   player.col+= player.cdel;
  }
 
@@ -1110,10 +1185,10 @@ void updatePlayer() {
   if (!player.superMode)
    player.superMode = 1;
 
-  scoreCol2 = 5;
+
  }
 
- if (player.row - 1 <= 0) {
+ if (player.row - 1 <= 20) {
   lives = 0;
  }
 
@@ -1129,35 +1204,53 @@ void updatePlayer() {
   }
  }
 
- if (tired && bullets[3 - 1].active) {
-  if (!bullets[0].active) {
-   tired = 0;
-  }
- }
+
+
+
+
+
 }
 
 
 void drawPlayer() {
 
  if (!player.superMode) {
-  if (tired) {
-   shadowOAM[0].attr0 = player.row | (0<<13) | (0<<14);
-   shadowOAM[0].attr1 = player.col | (1<<14);
-   shadowOAM[0].attr2 = ((0)<<12) | (((player.curFrame % player.numFrames) * 2)*32+(player.superMode + 6));
-  } else {
-   shadowOAM[0].attr0 = player.row | (0<<13) | (0<<14);
-   shadowOAM[0].attr1 = player.col | (1<<14);
-   shadowOAM[0].attr2 = ((0)<<12) | (((player.curFrame % player.numFrames) * 2)*32+(player.superMode));
+  shadowOAM[0].attr0 = player.row | (0<<13) | (0<<14);
+  shadowOAM[0].attr1 = player.col | (1<<14);
+  if (lives == 3) {
+   shadowOAM[0].attr2 = ((1)<<10) | ((0)<<12) | (((player.curFrame % player.numFrames) * 2)*32+(player.superMode));
+   if (tired) {
+    shadowOAM[0].attr2 = ((1)<<10) | ((0)<<12) | (((player.curFrame % player.numFrames) * 2)*32+(player.superMode + 6));
+   }
+  } else if (lives == 2) {
+   shadowOAM[0].attr2 = ((1)<<10) | ((0)<<12) | (((player.curFrame % player.numFrames) * 2 + 4)*32+(player.superMode));
+   if (tired) {
+    shadowOAM[0].attr2 = ((1)<<10) | ((0)<<12) | (((player.curFrame % player.numFrames) * 2 + 4)*32+(player.superMode + 6));
+   }
+  } else if (lives == 1) {
+   shadowOAM[0].attr2 = ((1)<<10) | ((0)<<12) | (((player.curFrame % player.numFrames) * 2 + 8)*32+(player.superMode));
+   if (tired) {
+    shadowOAM[0].attr2 = ((1)<<10) | ((0)<<12) | (((player.curFrame % player.numFrames) * 2 + 8)*32+(player.superMode + 6));
+   }
   }
  } else {
-  if (tired) {
-   shadowOAM[0].attr0 = player.row | (0<<13) | (0<<14);
-   shadowOAM[0].attr1 = player.col | (1<<14);
-   shadowOAM[0].attr2 = ((0)<<12) | (((player.curFrame % player.numFrames) * 2)*32+(player.superMode * 4));
-  } else {
-   shadowOAM[0].attr0 = player.row | (0<<13) | (0<<14);
-   shadowOAM[0].attr1 = player.col | (1<<14);
-   shadowOAM[0].attr2 = ((0)<<12) | (((player.curFrame % player.numFrames) * 2)*32+(player.superMode * 2));
+  shadowOAM[0].attr0 = player.row | (0<<13) | (0<<14);
+  shadowOAM[0].attr1 = player.col | (1<<14);
+  if (lives == 3) {
+   shadowOAM[0].attr2 = ((1)<<10) | ((0)<<12) | (((player.curFrame % player.numFrames) * 2)*32+(player.superMode * 2));
+   if (tired) {
+    shadowOAM[0].attr2 = ((1)<<10) | ((0)<<12) | (((player.curFrame % player.numFrames) * 2)*32+(player.superMode * 4));
+   }
+  } else if (lives == 2) {
+   shadowOAM[0].attr2 = ((1)<<10) | ((0)<<12) | (((player.curFrame % player.numFrames) * 2 + 4)*32+(player.superMode * 2));
+   if (tired) {
+    shadowOAM[0].attr2 = ((1)<<10) | ((0)<<12) | (((player.curFrame % player.numFrames) * 2 + 4)*32+(player.superMode * 4));
+   }
+  } else if (lives == 1) {
+   shadowOAM[0].attr2 = ((1)<<10) | ((0)<<12) | (((player.curFrame % player.numFrames) * 2 + 8)*32+(player.superMode * 2));
+   if (tired) {
+    shadowOAM[0].attr2 = ((1)<<10) | ((0)<<12) | (((player.curFrame % player.numFrames) * 2 + 8)*32+(player.superMode * 4));
+   }
   }
  }
 
@@ -1176,11 +1269,13 @@ void initBullets() {
   bullets[i].cdel = 0;
   bullets[i].active = 0;
   bullets[i].superBullet = 0;
+  bullets[i].curFrame = 0;
+  bullets[i].numFrames = 2;
  }
 
  for (int i = 0; i < 5; i++) {
-  enemyBullets[i].height = 8;
-  enemyBullets[i].width = 8;
+  enemyBullets[i].height = 16;
+  enemyBullets[i].width = 9;
   enemyBullets[i].row = 0;
   enemyBullets[i].col = 0;
   enemyBullets[i].rdel = 1;
@@ -1201,8 +1296,10 @@ void initSuperBullets() {
   superBullets[i].cdel = 0;
   superBullets[i].active = 0;
   superBullets[i].treasure = i;
+  superBullets[i].curFrame = 0;
+  superBullets[i].numFrames = 2;
  }
- scoreCol2 = 5;
+
 }
 
 
@@ -1245,9 +1342,10 @@ void fireEnemyBullet() {
 
  for (int i = 0; i < 5; i++) {
   int j = rand() % 240 - enemyBullets[i].width;
+
   if (!enemyBullets[i].active) {
 
-    enemyBullets[i].row = 0;
+    enemyBullets[i].row = 0 - enemyBullets[i].height;
     enemyBullets[i].col = j;
 
 
@@ -1298,13 +1396,14 @@ void updateBullet(BULLET* b) {
      }
      if (enemyBullets[i].active) {
       b->rdel = -2;
+      b->cdel = 0;
 
-      if (enemyBullets[i].row < b->row) {
-       b->rdel = -2;
+      if (enemyBullets[i].row > b->row) {
+       b->rdel = 2;
       } else if (enemyBullets[i].row == b->row) {
        b->rdel = 0;
       } else {
-       b->rdel = 2;
+       b->rdel = -2;
       }
 
       if (enemyBullets[i].col < b->col) {
@@ -1328,13 +1427,14 @@ void updateBullet(BULLET* b) {
 
   for (int i = 0; i < 5; i++) {
    if (enemyBullets[i].active && collision(b->row, b->col, b->height, b->width, enemyBullets[i].row, enemyBullets[i].col, enemyBullets[i].height, enemyBullets[i].width)) {
+    totalScore += 1;
     b->active = 0;
     enemyBullets[i].active = 0;
     alreadyDrop = 0;
 
     if (player.superMode) {
      superFired++;
-     scoreCol2--;
+
     }
     if (rand()%2 == 1 && !specialActive) {
      fireSpecial(i);
@@ -1345,6 +1445,11 @@ void updateBullet(BULLET* b) {
 
    }
   }
+  if (vblankCount % 15 == 0) {
+   b->curFrame++;
+  }
+ } else {
+  tired = 0;
  }
 }
 
@@ -1352,7 +1457,7 @@ void updateBullet(BULLET* b) {
 void updateEnemyBullet(BULLET* b) {
 
  if (b->active) {
-  if (b->row + b->height <= player.groundRow + player.height
+  if (b->row + b->height <= player.groundRow
    && b->col + b->cdel > 0
    && b->col + b->cdel < 240 -1) {
    if (vblankCount % 1 == 0) {
@@ -1373,9 +1478,9 @@ void drawBullet() {
    shadowOAM[i + 27].attr0 = (bullets[i].row & 0xFF) | (0<<13) | (0<<14);
    shadowOAM[i + 27].attr1 = (bullets[i].col & 0x1FF) | (0<<14);
    if (player.superMode) {
-    shadowOAM[i + 27].attr2 = ((0)<<12) | ((0)*32+(10));
+    shadowOAM[i + 27].attr2 = ((1)<<10) | ((0)<<12) | ((bullets[i].curFrame % bullets[i].numFrames)*32+(10));
    } else {
-    shadowOAM[i + 27].attr2 = ((0)<<12) | ((0)*32+(9));
+    shadowOAM[i + 27].attr2 = ((1)<<10) | ((0)<<12) | ((bullets[i].curFrame % bullets[i].numFrames)*32+(9));
    }
   } else {
    shadowOAM[i + 27].attr0 = (2<<8);
@@ -1387,9 +1492,9 @@ void drawBullet() {
 void drawEnemyBullet() {
  for (int i = 0; i< 5; i++) {
   if (enemyBullets[i].active) {
-   shadowOAM[i + 32].attr0 = enemyBullets[i].row | (0<<13) | (0<<14);
-   shadowOAM[i + 32].attr1 = enemyBullets[i].col | (1<<14);
-   shadowOAM[i + 32].attr2 = ((0)<<12) | ((0)*32+(13));
+   shadowOAM[i + 32].attr0 = (enemyBullets[i].row & 0xFF) | (0<<13) | (0<<14);
+   shadowOAM[i + 32].attr1 = (enemyBullets[i].col & 0x1FF) | (1<<14);
+   shadowOAM[i + 32].attr2 = ((1)<<10) | ((0)<<12) | ((0)*32+(13));
   } else {
    shadowOAM[i + 32].attr0 = (2<<8);
   }
@@ -1410,8 +1515,11 @@ void initEnemys() {
   enemys[i].active = 0;
   enemys[i].aniCounter = 0;
   enemys[i].curFrame = 0;
-  enemys[i].numFrames = 2;
+  enemys[i].numFrames = 4;
+  enemys[i].dying = 0;
+  enemys[i].actuallyDie = 0;
  }
+
 
 }
 
@@ -1420,7 +1528,7 @@ void updateEnemy(ENEMY* b) {
 
  if (b->active) {
   b->aniCounter++;
-  if(b->aniCounter % 20 == 0) {
+  if(b->aniCounter % 10 == 0) {
    b->curFrame = (b->curFrame+1) % b->numFrames;
   }
 
@@ -1443,8 +1551,10 @@ void updateEnemy(ENEMY* b) {
     bullets[i].row, bullets[i].col, bullets[i].height, bullets[i].width)) {
 
 
+    totalScore += 2;
     bullets[i].active = 0;
     b->active = 0;
+    b->actuallyDie = 1;
 
 
     enemysRemaining--;
@@ -1456,6 +1566,10 @@ void updateEnemy(ENEMY* b) {
 
    }
   }
+ } else {
+  if (b->actuallyDie) {
+   b->dying += 1;
+  }
  }
 }
 
@@ -1463,8 +1577,8 @@ void fireEnemy() {
  int i = rand() % 5;
   if (!enemys[i].active) {
 
-    enemys[i].row = 160 - (i * 10) - 10;
-    enemys[i].col = 1;
+    enemys[i].row = player.groundRow - (i * 10);
+    enemys[i].col = 0 - enemys[i].width;
 
 
     enemys[i].active = 1;
@@ -1477,11 +1591,28 @@ void fireEnemy() {
 void drawEnemy() {
  for (int i = 0; i < 5; i++) {
   if (enemys[i].active) {
-   shadowOAM[i + 1].attr0 = enemys[i].row | (0<<13) | (0<<14);
-   shadowOAM[i + 1].attr1 = enemys[i].col | (0<<14);
-   shadowOAM[i + 1].attr2 = ((0)<<12) | ((0)*32+(11));
+   shadowOAM[i + 1].attr0 = (enemys[i].row & 0xFF) | (0<<13) | (0<<14);
+   shadowOAM[i + 1].attr1 = (enemys[i].col & 0x1FF) | (0<<14);
+   shadowOAM[i + 1].attr2 = ((0)<<12) | ((enemys[i].curFrame)*32+(11));
   } else {
-   shadowOAM[i + 1].attr0 = (2<<8);
+
+
+
+
+
+
+
+   if (enemys[i].actuallyDie) {
+    shadowOAM[i + 1].attr0 = enemys[i].row | (0<<13) | (0<<14) | (1<<10);
+    shadowOAM[i + 1].attr1 = enemys[i].col | (0<<14);
+    shadowOAM[i + 1].attr2 = ((0)<<12) | ((4)*32+(11));
+    if (enemys[i].dying % 50 == 0) {
+     shadowOAM[i + 1].attr0 = (2<<8);
+     enemys[i].actuallyDie = 0;
+    }
+   } else {
+    shadowOAM[i + 1].attr0 = (2<<8);
+   }
   }
  }
 }
@@ -1499,7 +1630,7 @@ void initTreasure() {
      treasures[i].aniState = 0;
      treasures[i].prevAniState = 0;
      treasures[i].curFrame = 0;
-     treasures[i].numFrames = 1;
+     treasures[i].numFrames = 4;
   treasures[i].bulletTimer = 0;
   treasures[i].cDirection = 0;
   treasures[i].active = 0;
@@ -1521,7 +1652,7 @@ void updateTreasure(ANISPRITE* a) {
   }
 
   a->timeDrop++;
-  if (a->timeDrop == 300) {
+  if (a->timeDrop % 300 == 0) {
    a->dying = 1;
   }
   if (a->timeDrop == 600) {
@@ -1531,7 +1662,11 @@ void updateTreasure(ANISPRITE* a) {
   if (collision(player.row, player.col, player.height, player.width,
    a->row, a->col, a->height, a->width)) {
    a->active = 0;
+   totalScore += 5;
    a->rdel = 1;
+  }
+  if (vblankCount % 10 == 0) {
+   a->curFrame++;
   }
 
 
@@ -1547,6 +1682,7 @@ void fireTreasure(int i) {
    treasures[j].active = 1;
    treasures[j].onScreen = 0;
    treasures[j].dying = 0;
+   treasures[j].timeDrop = 0;
    drawTreasure();
    break;
   }
@@ -1562,7 +1698,7 @@ void drawTreasure() {
     shadowOAM[i + 41].attr0 = treasures[i].row | (0<<13) | (0<<14);
    }
    shadowOAM[i + 41].attr1 = treasures[i].col | (0<<14);
-   shadowOAM[i + 41].attr2 = ((0)<<12) | ((0)*32+(8));
+   shadowOAM[i + 41].attr2 = ((1)<<10) | ((0)<<12) | ((treasures[i].curFrame % treasures[i].numFrames)*32+(8));
 
   } else {
    shadowOAM[i + 41].attr0 = (2<<8);
@@ -1584,7 +1720,7 @@ void initSpecial() {
      specials[i].aniState = 0;
      specials[i].prevAniState = 0;
      specials[i].curFrame = 0;
-     specials[i].numFrames = 1;
+     specials[i].numFrames = 4;
   specials[i].bulletTimer = 0;
   specials[i].cDirection = 0;
   specials[i].active = 0;
@@ -1616,9 +1752,14 @@ void updateSpecial(ANISPRITE* a) {
   if (collision(player.row, player.col, player.height, player.width,
    a->row, a->col, a->height, a->width)) {
    a->active = 0;
+   totalScore += 5;
    a->rdel = 1;
    specialCollected = 1;
+   drawPowerReady();
 
+  }
+  if (vblankCount % 10 == 0) {
+   a->curFrame++;
   }
 
 
@@ -1634,6 +1775,7 @@ void fireSpecial(int i) {
    specials[j].active = 1;
    specialActive = 1;
    specials[j].dying = 0;
+   specials[j].timeDrop = 0;
    drawSpecial();
    break;
   }
@@ -1649,7 +1791,7 @@ void drawSpecial() {
     shadowOAM[i + 46].attr0 = specials[i].row | (0<<13) | (0<<14);
    }
    shadowOAM[i + 46].attr1 = specials[i].col | (0<<14);
-   shadowOAM[i + 46].attr2 = ((0)<<12) | ((0)*32+(15));
+   shadowOAM[i + 46].attr2 = ((1)<<10) | ((0)<<12) | ((specials[i].curFrame % specials[i].numFrames)*32+(15));
 
   } else {
    shadowOAM[i + 46].attr0 = (2<<8);

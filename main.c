@@ -85,6 +85,12 @@ For the future:
 #include "cheerup.h"
 #include "startbg2.h"
 #include "gametopbg.h"
+#include "cavebg.h"
+#include "gamegroundbg.h"
+#include "instructions2bg.h"
+#include "instructions3bg.h"
+#include "instructions4bg.h"
+#include "instructions5bg.h"
 
 void initialize();
 
@@ -99,8 +105,8 @@ void goToPause();
 void pause();
 void goToWin();
 void win();
-void goToLose();
-void lose();
+// void goToLose();
+// void lose();
 
 void setupSounds();
 void playSoundA( const unsigned char* sound, int length, int frequency, int loops);
@@ -112,9 +118,13 @@ void stopSound();
 void setupInterrupts();
 void interruptHandler();
 
-enum {START, INSTRUCTIONS, GAME, PAUSE, WIN, LOSE};
+void demo();
+
+enum {START, INSTRUCTIONS, GAME, PAUSE, WIN/*, LOSE*/};
 int state;
 int seed;
+int instState;
+enum {FIRST, SECOND, THIRD, FOURTH, FIFTH};
 
 typedef struct{
     const unsigned char* data;
@@ -137,6 +147,13 @@ int hOff = 0;
 int vOff = 0;
 int slower = 0;
 int which = 0;
+
+int isDemo;
+int demoHor;
+
+int instPage;
+
+int highScore = 0;
 
 int main() {
 
@@ -164,9 +181,9 @@ int main() {
             case WIN:
                 win();
                 break;
-            case LOSE:
+            /*case LOSE:
                 lose();
-                break;
+                break;*/
         }
 
 	}
@@ -176,10 +193,13 @@ int main() {
 
 
 void initialize() {
-	REG_DISPCTL = MODE0 | BG0_ENABLE | BG1_ENABLE | SPRITE_ENABLE;
+	REG_DISPCTL = MODE0 | BG0_ENABLE | BG1_ENABLE | SPRITE_ENABLE | BG2_ENABLE;
 
-	REG_BG1CNT = BG_SIZE_TALL | BG_CHARBLOCK(0) | BG_SCREENBLOCK(30);
-	REG_BG0CNT = BG_SIZE_TALL | BG_CHARBLOCK(1) | BG_SCREENBLOCK(28);
+    REG_BG2CNT = BG_SIZE_TALL | BG_CHARBLOCK(2) | BG_SCREENBLOCK(26) | 1; //bottom
+	REG_BG1CNT = BG_SIZE_TALL | BG_CHARBLOCK(0) | BG_SCREENBLOCK(30) | 1;
+	REG_BG0CNT = BG_SIZE_TALL | BG_CHARBLOCK(1) | BG_SCREENBLOCK(28) | 0;//top
+
+    REG_DISPCTL ^= BG2_ENABLE;
 
     setupSounds();
     setupInterrupts();
@@ -219,8 +239,6 @@ void playSoundA( const unsigned char* sound, int length, int frequency, int loop
         REG_TM0D = -ticks;
         REG_TM0CNT = TIMER_ON;
 
-        //TODO: FINISH THIS FUNCTION
-        // Assign all the appropriate struct values (excluding priority)
         soundA.data = sound;
         soundA.length = length;
         soundA.frequency = frequency;
@@ -244,8 +262,6 @@ void playSoundB( const unsigned char* sound, int length, int frequency, int loop
         REG_TM1D = -ticks;
         REG_TM1CNT = TIMER_ON;
 
-        // TODO: FINISH THIS FUNCTION
-        // Assign all the appropriate struct values
         soundB.data = sound;
         soundB.length = length;
         soundB.frequency = frequency;
@@ -257,7 +273,6 @@ void playSoundB( const unsigned char* sound, int length, int frequency, int loop
 
 void pauseSound()
 {
-	// TODO: WRITE THIS FUNCTION
     if (soundA.isPlaying) {
         soundA.isPlaying = 0;
         REG_TM0CNT = 0;
@@ -270,7 +285,6 @@ void pauseSound()
 
 void unpauseSound()
 {
-	// TODO: WRITE THIS FUNCTION
     if (!soundA.isPlaying) {
         soundA.isPlaying = 1;
         REG_TM0CNT = TIMER_ON;;
@@ -284,7 +298,6 @@ void unpauseSound()
 
 void stopSound()
 {
-    // TODO: WRITE THIS FUNCTION
     if (soundA.isPlaying) {
         soundA.isPlaying = 0;
         dma[1].cnt = 0;
@@ -300,9 +313,7 @@ void stopSound()
 void setupInterrupts()
 {
 	REG_IME = 0;
-	// TODO: SET UP THE INTERRUPT HANDLER HERE
-	// HINT: THERE IS A REGISTER THAT NEEDS TO POINT TO A INTERRUPT FUNCTION
-	// HINT: THAT INTERRUPT FUNCTION HAS TO BE CAST TO SOMETHING...
+
     REG_INTERRUPT = (unsigned int) interruptHandler;
 
 	REG_IE |= INT_VBLANK;
@@ -315,8 +326,6 @@ void interruptHandler()
 	REG_IME = 0;
 	if(REG_IF & INT_VBLANK)
 	{
-		//TODO: FINISH THIS FUNCTION
-		// This should be where you determine if a sound if finished or not
         if (soundA.isPlaying) {
             soundA.vbCount++;
             if (soundA.vbCount == soundA.duration) {
@@ -427,37 +436,222 @@ void goToInstructions() {
 	DMANow(3, instructionsbgTiles, &CHARBLOCK[0], instructionsbgTilesLen/2);
 	DMANow(3, instructionsbgMap, &SCREENBLOCK[30], instructionsbgMapLen/2);
 
-    vOff = 0;
+    instState = FIRST;
+    instPage = 0;
+    isDemo = 0;
+    demoHor = 0;
 
     state = INSTRUCTIONS;
 }
 
 void instructions() {
-    waitForVBlank();
+
     // slower++;
-    if (BUTTON_HELD(BUTTON_DOWN) && vOff <= 30) {
-        vOff++;
-    }
-    if (BUTTON_HELD(BUTTON_UP) && vOff >= 0) {
-        vOff--;
+    // if (BUTTON_HELD(BUTTON_DOWN) && vOff <= 30) {
+    //     vOff++;
+    // }
+    // if (BUTTON_HELD(BUTTON_UP) && vOff >= 0) {
+    //     vOff--;
+    // }
+    if (BUTTON_PRESSED(BUTTON_START)) {
+        if (instPage == 0) {
+            REG_DISPCTL ^= BG0_ENABLE;
+            goToStart();
+        } else if (instPage == 1) {
+            loadPalette(instructions3bgPal);
+
+            DMANow(3, instructions3bgTiles, &CHARBLOCK[0], instructions3bgTilesLen/2);
+            DMANow(3, instructions3bgMap, &SCREENBLOCK[30], instructions3bgMapLen/2);
+            instState = SECOND;
+        } else if (instPage == 2) {
+            loadPalette(instructionsbgPal);
+
+            DMANow(3, instructionsbgTiles, &CHARBLOCK[0], instructionsbgTilesLen/2);
+            DMANow(3, instructionsbgMap, &SCREENBLOCK[30], instructionsbgMapLen/2);
+            instPage = 0;
+            shadowOAM[0].attr0 = ATTR0_HIDE;
+            DMANow(3, shadowOAM, OAM, 128*4);
+            instState = FIRST;
+        } else if (instPage == 3) {
+            isDemo = !isDemo;
+            demo();
+            instState = THIRD;
+        } else if (instPage == 4) {
+            shadowOAM[0].attr0 = ATTR0_HIDE;
+            DMANow(3, shadowOAM, OAM, 128*4);
+            instState = FOURTH;
+        } else if (instPage == 5) {
+            loadPalette(instructions4bgPal);
+
+            DMANow(3, instructions4bgTiles, &CHARBLOCK[0], instructions4bgTilesLen/2);
+            DMANow(3, instructions4bgMap, &SCREENBLOCK[30], instructions4bgMapLen/2);
+            instPage = 3;
+            instState = SECOND;
+        }
     }
 
-    REG_BG1VOFF = vOff;
+    switch(instState) {
 
-    if (BUTTON_PRESSED(BUTTON_SELECT) || BUTTON_PRESSED(BUTTON_START)) {
-        REG_DISPCTL ^= BG0_ENABLE;
-        goToStart();
+        case FIRST:
+        // loadPalette(instructionsbgPal);
+        //
+        // DMANow(3, instructionsbgTiles, &CHARBLOCK[0], instructionsbgTilesLen/2);
+        // DMANow(3, instructionsbgMap, &SCREENBLOCK[30], instructionsbgMapLen/2);
+        // if (BUTTON_PRESSED(BUTTON_START)) {
+        //     goToStart();
+        // }
+
+        if (BUTTON_PRESSED(BUTTON_RIGHT)) {
+            loadPalette(instructions2bgPal);
+
+            DMANow(3, instructions2bgTiles, &CHARBLOCK[0], instructions2bgTilesLen/2);
+            DMANow(3, instructions2bgMap, &SCREENBLOCK[30], instructions2bgMapLen/2);
+
+            instPage = 1;
+
+        }
+
+        if (BUTTON_PRESSED(BUTTON_LEFT)) {
+            loadPalette(instructionsbgPal);
+
+            DMANow(3, instructionsbgTiles, &CHARBLOCK[0], instructionsbgTilesLen/2);
+            DMANow(3, instructionsbgMap, &SCREENBLOCK[30], instructionsbgMapLen/2);
+            instPage = 0;
+            // if (BUTTON_PRESSED(BUTTON_START)) {
+            //     goToStart();
+            // }
+        }
+
+            break;
+        case SECOND:
+        // loadPalette(instructions3bgPal);
+        //
+        // DMANow(3, instructions3bgTiles, &CHARBLOCK[0], instructions3bgTilesLen/2);
+        // DMANow(3, instructions3bgMap, &SCREENBLOCK[30], instructions3bgMapLen/2);
+        // if (BUTTON_PRESSED(BUTTON_START)) {
+        //     instState = FIRST;
+        // }
+
+        if (BUTTON_PRESSED(BUTTON_RIGHT)) {
+            loadPalette(instructions5bgPal);
+
+            DMANow(3, instructions5bgTiles, &CHARBLOCK[0], instructions5bgTilesLen/2);
+            DMANow(3, instructions5bgMap, &SCREENBLOCK[30], instructions5bgMapLen/2);
+            // if (BUTTON_PRESSED(BUTTON_START)) {
+            //     instState = THIRD;
+            // }
+            instPage = 4;
+        }
+
+        if (BUTTON_PRESSED(BUTTON_UP)) {
+            loadPalette(instructions4bgPal);
+
+            DMANow(3, instructions4bgTiles, &CHARBLOCK[0], instructions4bgTilesLen/2);
+            DMANow(3, instructions4bgMap, &SCREENBLOCK[30], instructions4bgMapLen/2);
+            instPage = 3;
+            // if (BUTTON_PRESSED(BUTTON_START)) {
+            //     // load the sprites
+            //     demo();
+            // }
+        }
+
+        if (BUTTON_PRESSED(BUTTON_LEFT) || (BUTTON_PRESSED(BUTTON_DOWN) && instPage == 3)) {
+            loadPalette(instructions3bgPal);
+
+            DMANow(3, instructions3bgTiles, &CHARBLOCK[0], instructions3bgTilesLen/2);
+            DMANow(3, instructions3bgMap, &SCREENBLOCK[30], instructions3bgMapLen/2);
+            // if (BUTTON_PRESSED(BUTTON_START)) {
+            //     instState = FIRST;
+            // }
+            instPage = 2;
+        }
+            break;
+        case THIRD:
+        loadPalette(instructions4bgPal);
+
+        DMANow(3, instructions4bgTiles, &CHARBLOCK[0], instructions4bgTilesLen/2);
+        DMANow(3, instructions4bgMap, &SCREENBLOCK[30], instructions4bgMapLen/2);
+        instPage = 5;
+        demo();
+        // if (BUTTON_PRESSED(BUTTON_START)) {
+        //     instState = THIRD;;
+        // }
+        //
+        // if (BUTTON_PRESSED(BUTTON_RIGHT)) {
+        //     loadPalette(instructions2bgPal);
+        //
+        //     DMANow(3, instructions2bgTiles, &CHARBLOCK[0], instructions2bgTilesLen/2);
+        //     DMANow(3, instructions2bgMap, &SCREENBLOCK[30], instructions2bgMapLen/2);
+        //     if (BUTTON_PRESSED(BUTTON_START)) {
+        //         instState = FOURTH;
+        //     }
+        // }
+        //
+        // if (BUTTON_PRESSED(BUTTON_LEFT)) {
+        //     loadPalette(instructionsbgPal);
+        //
+        //     DMANow(3, instructionsbgTiles, &CHARBLOCK[0], instructionsbgTilesLen/2);
+        //     DMANow(3, instructionsbgMap, &SCREENBLOCK[30], instructionsbgMapLen/2);
+        //     if (BUTTON_PRESSED(BUTTON_START)) {
+        //         instState = THIRD;
+        //     }
+        // }
+            break;
+        case FOURTH:
+
+            break;
+        case FIFTH:
+
+            break;
     }
+
+
+    waitForVBlank();
+    // REG_BG1VOFF = vOff;
+
+    // if (BUTTON_PRESSED(BUTTON_SELECT) || BUTTON_PRESSED(BUTTON_START)) {
+    //     REG_DISPCTL ^= BG0_ENABLE;
+    //     goToStart();
+    // }
+}
+
+void demo() {
+    if (isDemo) {
+        //the button pressed stuff
+        if (BUTTON_HELD(BUTTON_RIGHT)) {
+            demoHor++;
+        } else if (BUTTON_HELD(BUTTON_LEFT)) {
+            demoHor--;
+        }
+    }
+
+    shadowOAM[0].attr0 = ((SCREENHEIGHT/2) + 20) | ATTR0_4BPP | ATTR0_SQUARE;
+    shadowOAM[0].attr1 = (SCREENWIDTH/2 + demoHor) | ATTR1_SMALL;
+    shadowOAM[0].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(0,0);
+    DMANow(3, spritesTiles, &CHARBLOCK[4], spritesTilesLen/2);
+    DMANow(3, spritesPal, SPRITEPALETTE, spritesPalLen/2);
+    DMANow(3, shadowOAM, OAM, 128*4);
+
 }
 
 void goToGame() {
-	// REG_DISPCTL ^= BG0_ENABLE;
-	loadPalette(gamebgPal);
+    REG_DISPCTL ^= BG2_ENABLE;
+
+    REG_BG0HOFF = 0;
+
+	loadPalette(cavebgPal);
+
+    DMANow(3, gamegroundbgTiles, &CHARBLOCK[0], gamegroundbgTilesLen/2);
+    DMANow(3, gamegroundbgMap, &SCREENBLOCK[30], gamegroundbgMapLen/2);
 
     DMANow(3, gametopbgTiles, &CHARBLOCK[1], gametopbgTilesLen/2);
     DMANow(3, gametopbgMap, &SCREENBLOCK[28], gametopbgMapLen/2);
-	DMANow(3, gamebgTiles, &CHARBLOCK[0], gamebgTilesLen/2);
-	DMANow(3, gamebgMap, &SCREENBLOCK[30], gamebgMapLen/2);
+
+
+	// DMANow(3, gamebgTiles, &CHARBLOCK[0], gamebgTilesLen/2);
+	// DMANow(3, gamebgMap, &SCREENBLOCK[30], gamebgMapLen/2);
+    DMANow(3, cavebgTiles, &CHARBLOCK[2], cavebgTilesLen/2);
+	DMANow(3, cavebgMap, &SCREENBLOCK[26], cavebgMapLen/2);
 
 
 	DMANow(3, spritesTiles, &CHARBLOCK[4], spritesTilesLen/2);
@@ -482,8 +676,8 @@ void game() {
     // flipPage();
     hOff = 0;
     vOff = SCREENHEIGHT - 80 - player.groundRow;
-    REG_BG0VOFF = vOff;
-    REG_BG0HOFF = hOff;
+    REG_BG1VOFF = vOff;
+    REG_BG1HOFF = hOff;
 
 
     if (BUTTON_PRESSED(BUTTON_START)) {
@@ -491,9 +685,7 @@ void game() {
         pauseSound();
         goToPause();
     }
-    else if (/*youLose == 1 || */lives == 0)
-        goToLose();
-    else if (enemysRemaining == 0 || BUTTON_PRESSED(BUTTON_SELECT))
+    else if (/*youLose == 1 || */lives == 0 || BUTTON_PRESSED(BUTTON_SELECT))
         goToWin();
 
 
@@ -503,14 +695,18 @@ void goToPause() {
 	hideSprites();
 	DMANow(3, shadowOAM, OAM, 128*4);
 
-	loadPalette(pausebgPal);
+    REG_DISPCTL = MODE3 | BG2_ENABLE;
+    drawFullscreenImage3(pausebgBitmap);
 
-	DMANow(3, pausebgTiles, &CHARBLOCK[0], pausebgTilesLen/2);
-	DMANow(3, pausebgMap, &SCREENBLOCK[30], pausebgMapLen/2);
+	// loadPalette(pausebgPal);
+    //
+	// DMANow(3, pausebgTiles, &CHARBLOCK[1], pausebgTilesLen/2);
+	// DMANow(3, pausebgMap, &SCREENBLOCK[28], pausebgMapLen/2);
 
     playSoundB(pauseaudio,PAUSEAUDIOLEN,PAUSEAUDIOFREQ, 1);
 
-    REG_DISPCTL ^= BG0_ENABLE;
+    // REG_DISPCTL ^= BG2_ENABLE;
+    // REG_DISPCTL ^= BG1_ENABLE;
 
     waitForVBlank();
 
@@ -523,18 +719,32 @@ void pause() {
 
     if (BUTTON_PRESSED(BUTTON_START)) {
         // goToGame();
-		REG_DISPCTL ^= BG0_ENABLE;
-		loadPalette(gamebgPal);
+        REG_DISPCTL = MODE0 | BG2_ENABLE | SPRITE_ENABLE;
+        DMANow(3, shadowOAM, OAM, 128*4);
+        // REG_DISPCTL ^= BG2_ENABLE;
+        REG_DISPCTL ^= BG1_ENABLE;
+        REG_DISPCTL ^= BG0_ENABLE;
+		loadPalette(cavebgPal);
 
-		DMANow(3, gamebgTiles, &CHARBLOCK[0], gamebgTilesLen/2);
-		DMANow(3, gamebgMap, &SCREENBLOCK[30], gamebgMapLen/2);
+        DMANow(3, gametopbgTiles, &CHARBLOCK[1], gametopbgTilesLen/2);
+        DMANow(3, gametopbgMap, &SCREENBLOCK[28], gametopbgMapLen/2);
+
+        DMANow(3, gamegroundbgTiles, &CHARBLOCK[0], gamegroundbgTilesLen/2);
+        DMANow(3, gamegroundbgMap, &SCREENBLOCK[30], gamegroundbgMapLen/2);
+
+		DMANow(3, cavebgTiles, &CHARBLOCK[2], cavebgTilesLen/2);
+		DMANow(3, cavebgMap, &SCREENBLOCK[26], cavebgMapLen/2);
 
 		DMANow(3, spritesTiles, &CHARBLOCK[4], spritesTilesLen/2);
 		DMANow(3, spritesPal, SPRITEPALETTE, spritesPalLen/2);
+
         stopSound();
         unpauseSound();
 		state = GAME;
 	} else if (BUTTON_PRESSED(BUTTON_SELECT)) {
+        REG_DISPCTL = MODE0 | SPRITE_ENABLE;
+        DMANow(3, shadowOAM, OAM, 128*4);
+        REG_DISPCTL ^= BG1_ENABLE;
         REG_DISPCTL ^= BG0_ENABLE;
         stopSound();
         playSoundA(knocknock,KNOCKNOCKLEN,KNOCKNOCKFREQ, 1);
@@ -545,14 +755,42 @@ void pause() {
 void goToWin() {
 	// REG_DISPCTL ^= BG0_ENABLE;
 	hideSprites();
+    if (totalScore > highScore) {
+        highScore = totalScore;
+    }
+
+    shadowOAM[52].attr0 = 29 | ATTR0_4BPP | ATTR0_SQUARE;
+    shadowOAM[52].attr1 = 43 | ATTR1_TINY;
+    shadowOAM[52].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(13,highScore / 100);
+
+    shadowOAM[53].attr0 = 29 | ATTR0_4BPP | ATTR0_SQUARE;
+    shadowOAM[53].attr1 = 48 | ATTR1_TINY;
+    shadowOAM[53].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(13,(highScore / 10) % 10);
+
+    shadowOAM[54].attr0 = 29 | ATTR0_4BPP | ATTR0_SQUARE;
+    shadowOAM[54].attr1 = 53 | ATTR1_TINY;
+    shadowOAM[54].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(13,highScore % 10);
+
+    shadowOAM[49].attr0 = 75 | ATTR0_4BPP | ATTR0_SQUARE;
+    shadowOAM[49].attr1 = 43 | ATTR1_TINY;
+    shadowOAM[49].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(13,totalScore / 100);
+
+    shadowOAM[50].attr0 = 75 | ATTR0_4BPP | ATTR0_SQUARE;
+    shadowOAM[50].attr1 = 48 | ATTR1_TINY;
+    shadowOAM[50].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(13,(totalScore / 10) % 10);
+
+    shadowOAM[51].attr0 = 75 | ATTR0_4BPP | ATTR0_SQUARE;
+    shadowOAM[51].attr1 = 53 | ATTR1_TINY;
+    shadowOAM[51].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(13,totalScore % 10);
 	DMANow(3, shadowOAM, OAM, 128*4);
 		loadPalette(winbgPal);
 
-		DMANow(3, winbgTiles, &CHARBLOCK[0], winbgTilesLen/2);
-		DMANow(3, winbgMap, &SCREENBLOCK[30], winbgMapLen/2);
+		DMANow(3, winbgTiles, &CHARBLOCK[2], winbgTilesLen/2);
+		DMANow(3, winbgMap, &SCREENBLOCK[26], winbgMapLen/2);
 		hideSprites();
 
         REG_DISPCTL ^= BG0_ENABLE;
+        REG_DISPCTL ^= BG1_ENABLE;
 
     playSoundA(cheerup,CHEERUPLEN,CHEERUPFREQ, 1);
 
@@ -564,46 +802,48 @@ void goToWin() {
 
 void win() {
 
-
     waitForVBlank();
 
     if (BUTTON_PRESSED(BUTTON_START)) {
-		REG_DISPCTL ^= BG0_ENABLE;
+		REG_DISPCTL ^= BG1_ENABLE;
+        REG_DISPCTL ^= BG0_ENABLE;
+        REG_DISPCTL ^= BG2_ENABLE;
         stopSound();
         playSoundA(knocknock,KNOCKNOCKLEN,KNOCKNOCKFREQ, 1);
         goToStart();
 	}
 }
 
-void goToLose() {
-	hideSprites();
-	DMANow(3, shadowOAM, OAM, 128*4);
-	// REG_DISPCTL ^= BG0_ENABLE;
-		loadPalette(losebgPal);
-
-		DMANow(3, losebgTiles, &CHARBLOCK[0], losebgTilesLen/2);
-		DMANow(3, losebgMap, &SCREENBLOCK[30], losebgMapLen/2);
-
-		hideSprites();
-
-        REG_DISPCTL ^= BG0_ENABLE;
-
-        playSoundA(tt,TTLEN,TTFREQ, 1);
-    waitForVBlank();
-
-
-    state = LOSE;
-}
-
-void lose() {
-
-
-    waitForVBlank();
-
-    if (BUTTON_PRESSED(BUTTON_START)) {
-		REG_DISPCTL ^= BG0_ENABLE;
-        stopSound();
-        playSoundA(knocknock,KNOCKNOCKLEN,KNOCKNOCKFREQ, 1);
-		goToStart();
-	}
-}
+// void goToLose() {
+// 	hideSprites();
+// 	DMANow(3, shadowOAM, OAM, 128*4);
+// 	// REG_DISPCTL ^= BG0_ENABLE;
+// 		loadPalette(losebgPal);
+//
+// 		DMANow(3, losebgTiles, &CHARBLOCK[1], losebgTilesLen/2);
+// 		DMANow(3, losebgMap, &SCREENBLOCK[28], losebgMapLen/2);
+//
+// 		hideSprites();
+//
+//         REG_DISPCTL ^= BG1_ENABLE;
+//         REG_DISPCTL ^= BG2_ENABLE;
+//
+//         playSoundA(tt,TTLEN,TTFREQ, 1);
+//     waitForVBlank();
+//
+//
+//     state = LOSE;
+// }
+//
+// void lose() {
+//
+//
+//     waitForVBlank();
+//
+//     if (BUTTON_PRESSED(BUTTON_START)) {
+// 		REG_DISPCTL ^= BG1_ENABLE;
+//         stopSound();
+//         playSoundA(knocknock,KNOCKNOCKLEN,KNOCKNOCKFREQ, 1);
+// 		goToStart();
+// 	}
+// }

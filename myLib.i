@@ -56,10 +56,10 @@ typedef struct {
 
 
 extern OBJ_ATTR shadowOAM[];
-# 176 "myLib.h"
+# 180 "myLib.h"
 extern unsigned short oldButtons;
 extern unsigned short buttons;
-# 187 "myLib.h"
+# 191 "myLib.h"
 typedef volatile struct {
     volatile const void *src;
     volatile void *dst;
@@ -68,9 +68,9 @@ typedef volatile struct {
 
 
 extern DMA *dma;
-# 227 "myLib.h"
+# 231 "myLib.h"
 void DMANow(int channel, volatile const void *src, volatile void *dst, unsigned int cnt);
-# 317 "myLib.h"
+# 348 "myLib.h"
 typedef struct
 {
  int row;

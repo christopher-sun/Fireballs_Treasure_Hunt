@@ -352,9 +352,9 @@ starttopbgMap:
 	.short	0
 	.short	0
 	.short	0
-	.short	4097
-	.short	4098
-	.short	4099
+	.short	1
+	.short	2
+	.short	3
 	.short	0
 	.short	0
 	.short	0
@@ -384,9 +384,9 @@ starttopbgMap:
 	.short	0
 	.short	0
 	.short	0
-	.short	4100
-	.short	4101
-	.short	4102
+	.short	4
+	.short	5
+	.short	6
 	.short	0
 	.short	0
 	.short	0
@@ -416,9 +416,9 @@ starttopbgMap:
 	.short	0
 	.short	0
 	.short	0
-	.short	4103
-	.short	4104
-	.short	4105
+	.short	7
+	.short	8
+	.short	9
 	.short	0
 	.short	0
 	.short	0
@@ -430,9 +430,9 @@ starttopbgMap:
 	.short	0
 	.short	0
 	.short	0
-	.short	4106
-	.short	4107
-	.short	4108
+	.short	10
+	.short	11
+	.short	12
 	.short	0
 	.short	0
 	.short	0
@@ -460,13 +460,13 @@ starttopbgMap:
 	.short	0
 	.short	0
 	.short	0
-	.short	4109
-	.short	4110
-	.short	4111
-	.short	4111
-	.short	4111
-	.short	4112
-	.short	4113
+	.short	13
+	.short	14
+	.short	15
+	.short	15
+	.short	15
+	.short	16
+	.short	17
 	.short	0
 	.short	0
 	.short	0
@@ -492,13 +492,13 @@ starttopbgMap:
 	.short	0
 	.short	0
 	.short	0
-	.short	4114
-	.short	4111
-	.short	4111
-	.short	4111
-	.short	4111
-	.short	4111
-	.short	4115
+	.short	18
+	.short	15
+	.short	15
+	.short	15
+	.short	15
+	.short	15
+	.short	19
 	.short	0
 	.short	0
 	.short	0
@@ -515,22 +515,22 @@ starttopbgMap:
 	.short	0
 	.short	0
 	.short	0
-	.short	4116
-	.short	5140
+	.short	20
+	.short	1044
 	.short	0
 	.short	0
 	.short	0
 	.short	0
 	.short	0
 	.short	0
-	.short	4117
-	.short	4111
-	.short	4111
-	.short	4111
-	.short	4111
-	.short	4111
-	.short	4111
-	.short	4118
+	.short	21
+	.short	15
+	.short	15
+	.short	15
+	.short	15
+	.short	15
+	.short	15
+	.short	22
 	.short	0
 	.short	0
 	.short	0
@@ -547,22 +547,22 @@ starttopbgMap:
 	.short	0
 	.short	0
 	.short	0
-	.short	4119
-	.short	5143
+	.short	23
+	.short	1047
 	.short	0
 	.short	0
 	.short	0
 	.short	0
 	.short	0
 	.short	0
-	.short	4120
-	.short	4111
-	.short	4111
-	.short	4111
-	.short	4111
-	.short	4111
-	.short	4111
-	.short	4121
+	.short	24
+	.short	15
+	.short	15
+	.short	15
+	.short	15
+	.short	15
+	.short	15
+	.short	25
 	.short	0
 	.short	0
 	.short	0
@@ -572,15 +572,15 @@ starttopbgMap:
 	.short	0
 	.short	0
 	.short	0
-	.short	4122
-	.short	4123
+	.short	26
+	.short	27
 	.short	0
 	.short	0
 	.short	0
 	.short	0
 	.short	0
-	.short	4124
-	.short	5148
+	.short	28
+	.short	1052
 	.short	0
 	.short	0
 	.short	0
@@ -588,13 +588,13 @@ starttopbgMap:
 	.short	0
 	.short	0
 	.short	0
-	.short	4125
-	.short	4111
-	.short	4111
-	.short	4111
-	.short	4111
-	.short	4111
-	.short	4126
+	.short	29
+	.short	15
+	.short	15
+	.short	15
+	.short	15
+	.short	15
+	.short	30
 	.short	0
 	.short	0
 	.short	0
@@ -603,10 +603,10 @@ starttopbgMap:
 	.short	0
 	.short	0
 	.short	0
-	.short	4127
-	.short	4128
-	.short	4129
-	.short	4130
+	.short	31
+	.short	32
+	.short	33
+	.short	34
 	.short	0
 	.short	0
 	.short	0
@@ -620,13 +620,13 @@ starttopbgMap:
 	.short	0
 	.short	0
 	.short	0
-	.short	4131
-	.short	4132
-	.short	4111
-	.short	4111
-	.short	4111
-	.short	4133
-	.short	4134
+	.short	35
+	.short	36
+	.short	15
+	.short	15
+	.short	15
+	.short	37
+	.short	38
 	.short	0
 	.short	0
 	.short	0
@@ -635,10 +635,10 @@ starttopbgMap:
 	.short	0
 	.short	0
 	.short	0
-	.short	4135
-	.short	4136
-	.short	4136
-	.short	4137
+	.short	39
+	.short	40
+	.short	40
+	.short	41
 	.short	0
 	.short	0
 	.short	0
@@ -653,11 +653,11 @@ starttopbgMap:
 	.short	0
 	.short	0
 	.short	0
-	.short	4138
-	.short	4139
-	.short	4140
-	.short	4141
-	.short	4142
+	.short	42
+	.short	43
+	.short	44
+	.short	45
+	.short	46
 	.short	0
 	.short	0
 	.short	0
@@ -667,10 +667,10 @@ starttopbgMap:
 	.short	0
 	.short	0
 	.short	0
-	.short	4143
-	.short	4144
-	.short	4145
-	.short	4146
+	.short	47
+	.short	48
+	.short	49
+	.short	50
 	.short	0
 	.short	0
 	.short	0
@@ -754,9 +754,9 @@ starttopbgMap:
 	.short	0
 	.short	0
 	.short	0
-	.short	4147
-	.short	4148
-	.short	4149
+	.short	51
+	.short	52
+	.short	53
 	.short	0
 	.short	0
 	.short	0
@@ -786,9 +786,9 @@ starttopbgMap:
 	.short	0
 	.short	0
 	.short	0
-	.short	4150
-	.short	4151
-	.short	4152
+	.short	54
+	.short	55
+	.short	56
 	.short	0
 	.short	0
 	.short	0

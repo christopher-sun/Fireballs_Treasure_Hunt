@@ -57,10 +57,10 @@ typedef struct {
 
 
 extern OBJ_ATTR shadowOAM[];
-# 176 "myLib.h"
+# 180 "myLib.h"
 extern unsigned short oldButtons;
 extern unsigned short buttons;
-# 187 "myLib.h"
+# 191 "myLib.h"
 typedef volatile struct {
     volatile const void *src;
     volatile void *dst;
@@ -69,9 +69,9 @@ typedef volatile struct {
 
 
 extern DMA *dma;
-# 227 "myLib.h"
+# 231 "myLib.h"
 void DMANow(int channel, volatile const void *src, volatile void *dst, unsigned int cnt);
-# 344 "myLib.h"
+# 348 "myLib.h"
 typedef struct
 {
  int row;
@@ -759,6 +759,8 @@ typedef struct {
  int aniCounter;
  int curFrame;
  int numFrames;
+ int dying;
+ int actuallyDie;
 } ENEMY;
 
 typedef struct {
@@ -780,8 +782,10 @@ typedef struct {
  int number;
  int onScreen;
  int superMode;
+ int timeDrop;
+ int dying;
 } ANISPRITE;
-# 73 "game.h"
+# 77 "game.h"
 extern ANISPRITE player;
 extern BULLET bullets[3];
 extern ENEMY enemys[5];
@@ -801,6 +805,7 @@ extern int specialCollected;
 extern int specialActive;
 extern int tired;
 extern int groundLevel;
+extern int totalScore;
 
 
 
@@ -848,6 +853,9 @@ void stopSound();
 
 void setupInterrupts();
 void interruptHandler();
+
+void drawPowerReady();
+void drawBulletCounter();
 # 72 "main.c" 2
 # 1 "sprites.h" 1
 # 21 "sprites.h"
@@ -858,27 +866,21 @@ extern const unsigned short spritesPal[256];
 # 73 "main.c" 2
 # 1 "startbg.h" 1
 # 22 "startbg.h"
-extern const unsigned short startbgTiles[1616];
+extern const unsigned short startbgTiles[4912];
 
 
-extern const unsigned short startbgMap[1024];
+extern const unsigned short startbgMap[2048];
 
 
 extern const unsigned short startbgPal[256];
 # 74 "main.c" 2
 # 1 "pausebg.h" 1
-# 22 "pausebg.h"
-extern const unsigned short pausebgTiles[96];
-
-
-extern const unsigned short pausebgMap[1024];
-
-
-extern const unsigned short pausebgPal[256];
+# 20 "pausebg.h"
+extern const unsigned short pausebgBitmap[38400];
 # 75 "main.c" 2
 # 1 "winbg.h" 1
 # 22 "winbg.h"
-extern const unsigned short winbgTiles[384];
+extern const unsigned short winbgTiles[5888];
 
 
 extern const unsigned short winbgMap[1024];
@@ -908,7 +910,7 @@ extern const unsigned short starttopbgPal[256];
 # 78 "main.c" 2
 # 1 "gamebg.h" 1
 # 22 "gamebg.h"
-extern const unsigned short gamebgTiles[384];
+extern const unsigned short gamebgTiles[768];
 
 
 extern const unsigned short gamebgMap[2048];
@@ -918,10 +920,10 @@ extern const unsigned short gamebgPal[256];
 # 79 "main.c" 2
 # 1 "instructionsbg.h" 1
 # 22 "instructionsbg.h"
-extern const unsigned short instructionsbgTiles[5744];
+extern const unsigned short instructionsbgTiles[4432];
 
 
-extern const unsigned short instructionsbgMap[1024];
+extern const unsigned short instructionsbgMap[2048];
 
 
 extern const unsigned short instructionsbgPal[256];
@@ -952,24 +954,84 @@ extern const unsigned char cheerup[2249917];
 # 86 "main.c" 2
 # 1 "startbg2.h" 1
 # 22 "startbg2.h"
-extern const unsigned short startbg2Tiles[1616];
+extern const unsigned short startbg2Tiles[4912];
 
 
-extern const unsigned short startbg2Map[1024];
+extern const unsigned short startbg2Map[2048];
 
 
 extern const unsigned short startbg2Pal[256];
 # 87 "main.c" 2
 # 1 "gametopbg.h" 1
 # 22 "gametopbg.h"
-extern const unsigned short gametopbgTiles[32];
+extern const unsigned short gametopbgTiles[2080];
 
 
-extern const unsigned short gametopbgMap[2048];
+extern const unsigned short gametopbgMap[1024];
 
 
 extern const unsigned short gametopbgPal[256];
 # 88 "main.c" 2
+# 1 "cavebg.h" 1
+# 22 "cavebg.h"
+extern const unsigned short cavebgTiles[7296];
+
+
+extern const unsigned short cavebgMap[2048];
+
+
+extern const unsigned short cavebgPal[256];
+# 89 "main.c" 2
+# 1 "gamegroundbg.h" 1
+# 22 "gamegroundbg.h"
+extern const unsigned short gamegroundbgTiles[1184];
+
+
+extern const unsigned short gamegroundbgMap[2048];
+
+
+extern const unsigned short gamegroundbgPal[256];
+# 90 "main.c" 2
+# 1 "instructions2bg.h" 1
+# 22 "instructions2bg.h"
+extern const unsigned short instructions2bgTiles[4432];
+
+
+extern const unsigned short instructions2bgMap[2048];
+
+
+extern const unsigned short instructions2bgPal[256];
+# 91 "main.c" 2
+# 1 "instructions3bg.h" 1
+# 22 "instructions3bg.h"
+extern const unsigned short instructions3bgTiles[1792];
+
+
+extern const unsigned short instructions3bgMap[2048];
+
+
+extern const unsigned short instructions3bgPal[256];
+# 92 "main.c" 2
+# 1 "instructions4bg.h" 1
+# 22 "instructions4bg.h"
+extern const unsigned short instructions4bgTiles[1792];
+
+
+extern const unsigned short instructions4bgMap[2048];
+
+
+extern const unsigned short instructions4bgPal[256];
+# 93 "main.c" 2
+# 1 "instructions5bg.h" 1
+# 22 "instructions5bg.h"
+extern const unsigned short instructions5bgTiles[1792];
+
+
+extern const unsigned short instructions5bgMap[2048];
+
+
+extern const unsigned short instructions5bgPal[256];
+# 94 "main.c" 2
 
 void initialize();
 
@@ -984,8 +1046,8 @@ void goToPause();
 void pause();
 void goToWin();
 void win();
-void goToLose();
-void lose();
+
+
 
 void setupSounds();
 void playSoundA( const unsigned char* sound, int length, int frequency, int loops);
@@ -997,9 +1059,13 @@ void stopSound();
 void setupInterrupts();
 void interruptHandler();
 
-enum {START, INSTRUCTIONS, GAME, PAUSE, WIN, LOSE};
+void demo();
+
+enum {START, INSTRUCTIONS, GAME, PAUSE, WIN };
 int state;
 int seed;
+int instState;
+enum {FIRST, SECOND, THIRD, FOURTH, FIFTH};
 
 typedef struct{
     const unsigned char* data;
@@ -1022,6 +1088,13 @@ int hOff = 0;
 int vOff = 0;
 int slower = 0;
 int which = 0;
+
+int isDemo;
+int demoHor;
+
+int instPage;
+
+int highScore = 0;
 
 int main() {
 
@@ -1049,9 +1122,9 @@ int main() {
             case WIN:
                 win();
                 break;
-            case LOSE:
-                lose();
-                break;
+
+
+
         }
 
  }
@@ -1061,10 +1134,13 @@ int main() {
 
 
 void initialize() {
- (*(unsigned short *)0x4000000) = 0 | (1<<8) | (1<<9) | (1<<12);
+ (*(unsigned short *)0x4000000) = 0 | (1<<8) | (1<<9) | (1<<12) | (1<<10);
 
- (*(volatile unsigned short*)0x400000A) = (2<<14) | ((0)<<2) | ((30)<<8);
- (*(volatile unsigned short*)0x4000008) = (2<<14) | ((1)<<2) | ((28)<<8);
+    (*(volatile unsigned short*)0x400000C) = (2<<14) | ((2)<<2) | ((26)<<8) | 1;
+ (*(volatile unsigned short*)0x400000A) = (2<<14) | ((0)<<2) | ((30)<<8) | 1;
+ (*(volatile unsigned short*)0x4000008) = (2<<14) | ((1)<<2) | ((28)<<8) | 0;
+
+    (*(unsigned short *)0x4000000) ^= (1<<10);
 
     setupSounds();
     setupInterrupts();
@@ -1104,8 +1180,6 @@ void playSoundA( const unsigned char* sound, int length, int frequency, int loop
         *(volatile unsigned short*)0x4000100 = -ticks;
         *(volatile unsigned short*)0x4000102 = (1<<7);
 
-
-
         soundA.data = sound;
         soundA.length = length;
         soundA.frequency = frequency;
@@ -1129,8 +1203,6 @@ void playSoundB( const unsigned char* sound, int length, int frequency, int loop
         *(volatile unsigned short*)0x4000104 = -ticks;
         *(volatile unsigned short*)0x4000106 = (1<<7);
 
-
-
         soundB.data = sound;
         soundB.length = length;
         soundB.frequency = frequency;
@@ -1142,7 +1214,6 @@ void playSoundB( const unsigned char* sound, int length, int frequency, int loop
 
 void pauseSound()
 {
-
     if (soundA.isPlaying) {
         soundA.isPlaying = 0;
         *(volatile unsigned short*)0x4000102 = 0;
@@ -1155,7 +1226,6 @@ void pauseSound()
 
 void unpauseSound()
 {
-
     if (!soundA.isPlaying) {
         soundA.isPlaying = 1;
         *(volatile unsigned short*)0x4000102 = (1<<7);;
@@ -1169,7 +1239,6 @@ void unpauseSound()
 
 void stopSound()
 {
-
     if (soundA.isPlaying) {
         soundA.isPlaying = 0;
         dma[1].cnt = 0;
@@ -1186,8 +1255,6 @@ void setupInterrupts()
 {
  *(unsigned short*)0x4000208 = 0;
 
-
-
     *(unsigned int*)0x3007FFC = (unsigned int) interruptHandler;
 
  *(unsigned short*)0x4000200 |= 1 << 0;
@@ -1200,8 +1267,6 @@ void interruptHandler()
  *(unsigned short*)0x4000208 = 0;
  if(*(volatile unsigned short*)0x4000202 & 1 << 0)
  {
-
-
         if (soundA.isPlaying) {
             soundA.vbCount++;
             if (soundA.vbCount == soundA.duration) {
@@ -1241,8 +1306,8 @@ void goToStart() {
 
  loadPalette(startbgPal);
 
- DMANow(3, startbgTiles, &((charblock *)0x6000000)[0], 3232/2);
- DMANow(3, startbgMap, &((screenblock *)0x6000000)[30], 2048/2);
+ DMANow(3, startbgTiles, &((charblock *)0x6000000)[0], 9824/2);
+ DMANow(3, startbgMap, &((screenblock *)0x6000000)[30], 4096/2);
  DMANow(3, starttopbgTiles, &((charblock *)0x6000000)[1], 1824/2);
  DMANow(3, starttopbgMap, &((screenblock *)0x6000000)[28], 2048/2);
 
@@ -1276,8 +1341,8 @@ void start() {
     if ((!(~(oldButtons)&((1<<5))) && (~buttons & ((1<<5))))) {
         loadPalette(startbgPal);
 
-        DMANow(3, startbgTiles, &((charblock *)0x6000000)[0], 3232/2);
-        DMANow(3, startbgMap, &((screenblock *)0x6000000)[30], 2048/2);
+        DMANow(3, startbgTiles, &((charblock *)0x6000000)[0], 9824/2);
+        DMANow(3, startbgMap, &((screenblock *)0x6000000)[30], 4096/2);
 
         which = 0;
     }
@@ -1285,8 +1350,8 @@ void start() {
     if ((!(~(oldButtons)&((1<<4))) && (~buttons & ((1<<4))))) {
         loadPalette(startbg2Pal);
 
-        DMANow(3, startbg2Tiles, &((charblock *)0x6000000)[0], 3232/2);
-        DMANow(3, startbg2Map, &((screenblock *)0x6000000)[30], 2048/2);
+        DMANow(3, startbg2Tiles, &((charblock *)0x6000000)[0], 9824/2);
+        DMANow(3, startbg2Map, &((screenblock *)0x6000000)[30], 4096/2);
 
         which = 1;
     }
@@ -1309,40 +1374,182 @@ void goToInstructions() {
     (*(unsigned short *)0x4000000) ^= (1<<8);
     loadPalette(instructionsbgPal);
 
- DMANow(3, instructionsbgTiles, &((charblock *)0x6000000)[0], 11488/2);
- DMANow(3, instructionsbgMap, &((screenblock *)0x6000000)[30], 2048/2);
+ DMANow(3, instructionsbgTiles, &((charblock *)0x6000000)[0], 8864/2);
+ DMANow(3, instructionsbgMap, &((screenblock *)0x6000000)[30], 4096/2);
 
-    vOff = 0;
+    instState = FIRST;
+    instPage = 0;
+    isDemo = 0;
+    demoHor = 0;
 
     state = INSTRUCTIONS;
 }
 
 void instructions() {
+# 456 "main.c"
+    if ((!(~(oldButtons)&((1<<3))) && (~buttons & ((1<<3))))) {
+        if (instPage == 0) {
+            (*(unsigned short *)0x4000000) ^= (1<<8);
+            goToStart();
+        } else if (instPage == 1) {
+            loadPalette(instructions3bgPal);
+
+            DMANow(3, instructions3bgTiles, &((charblock *)0x6000000)[0], 3584/2);
+            DMANow(3, instructions3bgMap, &((screenblock *)0x6000000)[30], 4096/2);
+            instState = SECOND;
+        } else if (instPage == 2) {
+            loadPalette(instructionsbgPal);
+
+            DMANow(3, instructionsbgTiles, &((charblock *)0x6000000)[0], 8864/2);
+            DMANow(3, instructionsbgMap, &((screenblock *)0x6000000)[30], 4096/2);
+            instPage = 0;
+            shadowOAM[0].attr0 = (2<<8);
+            DMANow(3, shadowOAM, ((OBJ_ATTR*)(0x7000000)), 128*4);
+            instState = FIRST;
+        } else if (instPage == 3) {
+            isDemo = !isDemo;
+            demo();
+            instState = THIRD;
+        } else if (instPage == 4) {
+            shadowOAM[0].attr0 = (2<<8);
+            DMANow(3, shadowOAM, ((OBJ_ATTR*)(0x7000000)), 128*4);
+            instState = FOURTH;
+        } else if (instPage == 5) {
+            loadPalette(instructions4bgPal);
+
+            DMANow(3, instructions4bgTiles, &((charblock *)0x6000000)[0], 3584/2);
+            DMANow(3, instructions4bgMap, &((screenblock *)0x6000000)[30], 4096/2);
+            instPage = 3;
+            instState = SECOND;
+        }
+    }
+
+    switch(instState) {
+
+        case FIRST:
+# 504 "main.c"
+        if ((!(~(oldButtons)&((1<<4))) && (~buttons & ((1<<4))))) {
+            loadPalette(instructions2bgPal);
+
+            DMANow(3, instructions2bgTiles, &((charblock *)0x6000000)[0], 8864/2);
+            DMANow(3, instructions2bgMap, &((screenblock *)0x6000000)[30], 4096/2);
+
+            instPage = 1;
+
+        }
+
+        if ((!(~(oldButtons)&((1<<5))) && (~buttons & ((1<<5))))) {
+            loadPalette(instructionsbgPal);
+
+            DMANow(3, instructionsbgTiles, &((charblock *)0x6000000)[0], 8864/2);
+            DMANow(3, instructionsbgMap, &((screenblock *)0x6000000)[30], 4096/2);
+            instPage = 0;
+
+
+
+        }
+
+            break;
+        case SECOND:
+# 535 "main.c"
+        if ((!(~(oldButtons)&((1<<4))) && (~buttons & ((1<<4))))) {
+            loadPalette(instructions5bgPal);
+
+            DMANow(3, instructions5bgTiles, &((charblock *)0x6000000)[0], 3584/2);
+            DMANow(3, instructions5bgMap, &((screenblock *)0x6000000)[30], 4096/2);
+
+
+
+            instPage = 4;
+        }
+
+        if ((!(~(oldButtons)&((1<<6))) && (~buttons & ((1<<6))))) {
+            loadPalette(instructions4bgPal);
+
+            DMANow(3, instructions4bgTiles, &((charblock *)0x6000000)[0], 3584/2);
+            DMANow(3, instructions4bgMap, &((screenblock *)0x6000000)[30], 4096/2);
+            instPage = 3;
+
+
+
+
+        }
+
+        if ((!(~(oldButtons)&((1<<5))) && (~buttons & ((1<<5)))) || ((!(~(oldButtons)&((1<<7))) && (~buttons & ((1<<7)))) && instPage == 3)) {
+            loadPalette(instructions3bgPal);
+
+            DMANow(3, instructions3bgTiles, &((charblock *)0x6000000)[0], 3584/2);
+            DMANow(3, instructions3bgMap, &((screenblock *)0x6000000)[30], 4096/2);
+
+
+
+            instPage = 2;
+        }
+            break;
+        case THIRD:
+        loadPalette(instructions4bgPal);
+
+        DMANow(3, instructions4bgTiles, &((charblock *)0x6000000)[0], 3584/2);
+        DMANow(3, instructions4bgMap, &((screenblock *)0x6000000)[30], 4096/2);
+        instPage = 5;
+        demo();
+# 599 "main.c"
+            break;
+        case FOURTH:
+
+            break;
+        case FIFTH:
+
+            break;
+    }
+
+
     waitForVBlank();
 
-    if ((~((*(volatile unsigned short *)0x04000130)) & ((1<<7))) && vOff <= 30) {
-        vOff++;
-    }
-    if ((~((*(volatile unsigned short *)0x04000130)) & ((1<<6))) && vOff >= 0) {
-        vOff--;
+
+
+
+
+
+}
+
+void demo() {
+    if (isDemo) {
+
+        if ((~((*(volatile unsigned short *)0x04000130)) & ((1<<4)))) {
+            demoHor++;
+        } else if ((~((*(volatile unsigned short *)0x04000130)) & ((1<<5)))) {
+            demoHor--;
+        }
     }
 
-    (*(volatile unsigned short *)0x04000016) = vOff;
+    shadowOAM[0].attr0 = ((160/2) + 20) | (0<<13) | (0<<14);
+    shadowOAM[0].attr1 = (240/2 + demoHor) | (1<<14);
+    shadowOAM[0].attr2 = ((0)<<12) | ((0)*32+(0));
+    DMANow(3, spritesTiles, &((charblock *)0x6000000)[4], 32768/2);
+    DMANow(3, spritesPal, ((unsigned short *)0x5000200), 512/2);
+    DMANow(3, shadowOAM, ((OBJ_ATTR*)(0x7000000)), 128*4);
 
-    if ((!(~(oldButtons)&((1<<2))) && (~buttons & ((1<<2)))) || (!(~(oldButtons)&((1<<3))) && (~buttons & ((1<<3))))) {
-        (*(unsigned short *)0x4000000) ^= (1<<8);
-        goToStart();
-    }
 }
 
 void goToGame() {
+    (*(unsigned short *)0x4000000) ^= (1<<10);
 
- loadPalette(gamebgPal);
+    (*(volatile unsigned short *)0x04000010) = 0;
 
-    DMANow(3, gametopbgTiles, &((charblock *)0x6000000)[1], 64/2);
-    DMANow(3, gametopbgMap, &((screenblock *)0x6000000)[28], 4096/2);
- DMANow(3, gamebgTiles, &((charblock *)0x6000000)[0], 768/2);
- DMANow(3, gamebgMap, &((screenblock *)0x6000000)[30], 4096/2);
+ loadPalette(cavebgPal);
+
+    DMANow(3, gamegroundbgTiles, &((charblock *)0x6000000)[0], 2368/2);
+    DMANow(3, gamegroundbgMap, &((screenblock *)0x6000000)[30], 4096/2);
+
+    DMANow(3, gametopbgTiles, &((charblock *)0x6000000)[1], 4160/2);
+    DMANow(3, gametopbgMap, &((screenblock *)0x6000000)[28], 2048/2);
+
+
+
+
+    DMANow(3, cavebgTiles, &((charblock *)0x6000000)[2], 14592/2);
+ DMANow(3, cavebgMap, &((screenblock *)0x6000000)[26], 4096/2);
 
 
  DMANow(3, spritesTiles, &((charblock *)0x6000000)[4], 32768/2);
@@ -1367,8 +1574,8 @@ void game() {
 
     hOff = 0;
     vOff = 160 - 80 - player.groundRow;
-    (*(volatile unsigned short *)0x04000012) = vOff;
-    (*(volatile unsigned short *)0x04000010) = hOff;
+    (*(volatile unsigned short *)0x04000016) = vOff;
+    (*(volatile unsigned short *)0x04000014) = hOff;
 
 
     if ((!(~(oldButtons)&((1<<3))) && (~buttons & ((1<<3))))) {
@@ -1376,9 +1583,7 @@ void game() {
         pauseSound();
         goToPause();
     }
-    else if ( lives == 0)
-        goToLose();
-    else if (enemysRemaining == 0 || (!(~(oldButtons)&((1<<2))) && (~buttons & ((1<<2)))))
+    else if ( lives == 0 || (!(~(oldButtons)&((1<<2))) && (~buttons & ((1<<2)))))
         goToWin();
 
 
@@ -1388,14 +1593,18 @@ void goToPause() {
  hideSprites();
  DMANow(3, shadowOAM, ((OBJ_ATTR*)(0x7000000)), 128*4);
 
- loadPalette(pausebgPal);
+    (*(unsigned short *)0x4000000) = 3 | (1<<10);
+    drawFullscreenImage3(pausebgBitmap);
 
- DMANow(3, pausebgTiles, &((charblock *)0x6000000)[0], 192/2);
- DMANow(3, pausebgMap, &((screenblock *)0x6000000)[30], 2048/2);
+
+
+
+
 
     playSoundB(pauseaudio,2182590,11025, 1);
 
-    (*(unsigned short *)0x4000000) ^= (1<<8);
+
+
 
     waitForVBlank();
 
@@ -1408,18 +1617,32 @@ void pause() {
 
     if ((!(~(oldButtons)&((1<<3))) && (~buttons & ((1<<3))))) {
 
-  (*(unsigned short *)0x4000000) ^= (1<<8);
-  loadPalette(gamebgPal);
+        (*(unsigned short *)0x4000000) = 0 | (1<<10) | (1<<12);
+        DMANow(3, shadowOAM, ((OBJ_ATTR*)(0x7000000)), 128*4);
 
-  DMANow(3, gamebgTiles, &((charblock *)0x6000000)[0], 768/2);
-  DMANow(3, gamebgMap, &((screenblock *)0x6000000)[30], 4096/2);
+        (*(unsigned short *)0x4000000) ^= (1<<9);
+        (*(unsigned short *)0x4000000) ^= (1<<8);
+  loadPalette(cavebgPal);
+
+        DMANow(3, gametopbgTiles, &((charblock *)0x6000000)[1], 4160/2);
+        DMANow(3, gametopbgMap, &((screenblock *)0x6000000)[28], 2048/2);
+
+        DMANow(3, gamegroundbgTiles, &((charblock *)0x6000000)[0], 2368/2);
+        DMANow(3, gamegroundbgMap, &((screenblock *)0x6000000)[30], 4096/2);
+
+  DMANow(3, cavebgTiles, &((charblock *)0x6000000)[2], 14592/2);
+  DMANow(3, cavebgMap, &((screenblock *)0x6000000)[26], 4096/2);
 
   DMANow(3, spritesTiles, &((charblock *)0x6000000)[4], 32768/2);
   DMANow(3, spritesPal, ((unsigned short *)0x5000200), 512/2);
+
         stopSound();
         unpauseSound();
   state = GAME;
  } else if ((!(~(oldButtons)&((1<<2))) && (~buttons & ((1<<2))))) {
+        (*(unsigned short *)0x4000000) = 0 | (1<<12);
+        DMANow(3, shadowOAM, ((OBJ_ATTR*)(0x7000000)), 128*4);
+        (*(unsigned short *)0x4000000) ^= (1<<9);
         (*(unsigned short *)0x4000000) ^= (1<<8);
         stopSound();
         playSoundA(knocknock,2170025,11025, 1);
@@ -1430,14 +1653,42 @@ void pause() {
 void goToWin() {
 
  hideSprites();
+    if (totalScore > highScore) {
+        highScore = totalScore;
+    }
+
+    shadowOAM[52].attr0 = 29 | (0<<13) | (0<<14);
+    shadowOAM[52].attr1 = 43 | (0<<14);
+    shadowOAM[52].attr2 = ((0)<<12) | ((13)*32+(highScore / 100));
+
+    shadowOAM[53].attr0 = 29 | (0<<13) | (0<<14);
+    shadowOAM[53].attr1 = 48 | (0<<14);
+    shadowOAM[53].attr2 = ((0)<<12) | ((13)*32+((highScore / 10) % 10));
+
+    shadowOAM[54].attr0 = 29 | (0<<13) | (0<<14);
+    shadowOAM[54].attr1 = 53 | (0<<14);
+    shadowOAM[54].attr2 = ((0)<<12) | ((13)*32+(highScore % 10));
+
+    shadowOAM[49].attr0 = 75 | (0<<13) | (0<<14);
+    shadowOAM[49].attr1 = 43 | (0<<14);
+    shadowOAM[49].attr2 = ((0)<<12) | ((13)*32+(totalScore / 100));
+
+    shadowOAM[50].attr0 = 75 | (0<<13) | (0<<14);
+    shadowOAM[50].attr1 = 48 | (0<<14);
+    shadowOAM[50].attr2 = ((0)<<12) | ((13)*32+((totalScore / 10) % 10));
+
+    shadowOAM[51].attr0 = 75 | (0<<13) | (0<<14);
+    shadowOAM[51].attr1 = 53 | (0<<14);
+    shadowOAM[51].attr2 = ((0)<<12) | ((13)*32+(totalScore % 10));
  DMANow(3, shadowOAM, ((OBJ_ATTR*)(0x7000000)), 128*4);
   loadPalette(winbgPal);
 
-  DMANow(3, winbgTiles, &((charblock *)0x6000000)[0], 768/2);
-  DMANow(3, winbgMap, &((screenblock *)0x6000000)[30], 2048/2);
+  DMANow(3, winbgTiles, &((charblock *)0x6000000)[2], 11776/2);
+  DMANow(3, winbgMap, &((screenblock *)0x6000000)[26], 2048/2);
   hideSprites();
 
         (*(unsigned short *)0x4000000) ^= (1<<8);
+        (*(unsigned short *)0x4000000) ^= (1<<9);
 
     playSoundA(cheerup,2249917,11025, 1);
 
@@ -1449,46 +1700,14 @@ void goToWin() {
 
 void win() {
 
-
     waitForVBlank();
 
     if ((!(~(oldButtons)&((1<<3))) && (~buttons & ((1<<3))))) {
-  (*(unsigned short *)0x4000000) ^= (1<<8);
+  (*(unsigned short *)0x4000000) ^= (1<<9);
+        (*(unsigned short *)0x4000000) ^= (1<<8);
+        (*(unsigned short *)0x4000000) ^= (1<<10);
         stopSound();
         playSoundA(knocknock,2170025,11025, 1);
         goToStart();
- }
-}
-
-void goToLose() {
- hideSprites();
- DMANow(3, shadowOAM, ((OBJ_ATTR*)(0x7000000)), 128*4);
-
-  loadPalette(losebgPal);
-
-  DMANow(3, losebgTiles, &((charblock *)0x6000000)[0], 832/2);
-  DMANow(3, losebgMap, &((screenblock *)0x6000000)[30], 2048/2);
-
-  hideSprites();
-
-        (*(unsigned short *)0x4000000) ^= (1<<8);
-
-        playSoundA(tt,2311783,11025, 1);
-    waitForVBlank();
-
-
-    state = LOSE;
-}
-
-void lose() {
-
-
-    waitForVBlank();
-
-    if ((!(~(oldButtons)&((1<<3))) && (~buttons & ((1<<3))))) {
-  (*(unsigned short *)0x4000000) ^= (1<<8);
-        stopSound();
-        playSoundA(knocknock,2170025,11025, 1);
-  goToStart();
  }
 }

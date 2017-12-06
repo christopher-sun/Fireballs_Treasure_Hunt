@@ -37,6 +37,8 @@ typedef struct {
 	int aniCounter;
 	int curFrame;
 	int numFrames;
+	int dying;
+	int actuallyDie;
 } ENEMY;
 
 typedef struct {
@@ -91,6 +93,7 @@ extern int specialCollected;
 extern int specialActive;
 extern int tired;
 extern int groundLevel;
+extern int totalScore;
 
 // Custom Game Colors
 #define NUMCOLORS 6
@@ -138,3 +141,6 @@ void stopSound();
 
 void setupInterrupts();
 void interruptHandler();
+
+void drawPowerReady();
+void drawBulletCounter();
